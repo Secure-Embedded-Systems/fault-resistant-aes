@@ -16,7 +16,8 @@ void bs_transpose(WORD * transpose, WORD * blocks)
             w = blocks[k * WORDS_PER_BLOCK + i];
             for(j=0; j < WORD_SIZE; j++)
             {
-                transpose[i*WORD_SIZE + j] |= (w & (1ULL << j)) ? (1ULL<<k) : 0;
+                // TODO make const time
+                transpose[i*WORD_SIZE + j] |= (w & (ONE << j)) ? (ONE<<k) : 0;
             }
         }
     }
