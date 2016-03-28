@@ -35,7 +35,8 @@ void bs_sbox_rev(uint8_t W[8], uint8_t U[8])
         P21,P22,P23,P24,P25,P26,
         P27,P28,P29;
 
-    uint8_t Y5;
+    uint8_t Y5,
+        R5, R13, R17, R18, R19;
 
 
     T23 = U[0] ^ U[3];
@@ -43,27 +44,27 @@ void bs_sbox_rev(uint8_t W[8], uint8_t U[8])
     T2 = ~(U[0] ^ U[1]);
     T1 = U[3] ^ U[4];
     T24 = ~(U[4] ^ U[7]);
-    T5 = U[6] ^ U[7];
+    R5 = U[6] ^ U[7];
     T8 = ~(U[1] ^ T23);
-    T19 = T22 ^ T5;
+    T19 = T22 ^ R5;
     T9 = ~(U[7] ^ T1);
     T10 = T2 ^ T24;
-    T13 = T2 ^ T5;
-    T3 = T1 ^ T5;
+    T13 = T2 ^ R5;
+    T3 = T1 ^ R5;
     T25 = ~(U[2] ^ T1);
-    T13 = U[1] ^ U[6];
+    R13 = U[1] ^ U[6];
     T17 = ~(U[2] ^ T19);
-    T20 = T24 ^ T13;
+    T20 = T24 ^ R13;
     T4 = U[4] ^ T8;
-    T17 = ~(U[2] ^ U[5]);
-    T18 = ~(U[5] ^ U[6]);
-    T19 = ~(U[2] ^ U[4]);
-    Y5 = U[0] ^ T17;
-    T6 = T22 ^ T17;
-    T16 = T13 ^ T19;
-    T27 = T1 ^ T18;
+    R17 = ~(U[2] ^ U[5]);
+    R18 = ~(U[5] ^ U[6]);
+    R19 = ~(U[2] ^ U[4]);
+    Y5 = U[0] ^ R17;
+    T6 = T22 ^ R17;
+    T16 = R13 ^ R19;
+    T27 = T1 ^ R18;
     T15 = T10 ^ T27;
-    T14 = T10 ^ T18;
+    T14 = T10 ^ R18;
     T26 = T3 ^ T16;
     M1 = T13 & T6;
     M2 = T23 & T8;
@@ -165,6 +166,8 @@ void bs_sbox_rev(uint8_t W[8], uint8_t U[8])
     W[5] = P19 ^ P24;
     W[6] = P14 ^ P23;
     W[7] = P9 ^ P16;
+
+
 }
 void bs_sbox(uint8_t S[8], uint8_t U[8])
 {
@@ -387,6 +390,7 @@ extern uint8_t INPUT[WORD_SIZE/8][BLOCK_SIZE/8 + 1];
 
 int main()
 {
+#if 0
     WORD blocks[ BLOCK_SIZE ];
     WORD blocks_tmp[ BLOCK_SIZE ];
     memset(blocks,0, sizeof(blocks));
@@ -402,20 +406,25 @@ int main()
 
     printf("double transpose:\n");
     bs_dump(blocks_tmp);
+#endif
 
-    uint64_t sbox_in = 0x123456789abcdef;
-    uint64_t sbox_out = 0;
-    uint64_t sbox_rev = 0;
+    uint8_t sbox_in[] = {0x21,0x2,0x3,0x4,0x5,0x6,0x7,0x8};
+    uint8_t sbox_out[8];
+    uint8_t sbox_rev[8];
+    int idx = 7;
 
-    printf("SBOX input : %08"PRIx64"\n", sbox_in);
+    printf("SBOX input : ");
+    hex_dump(sbox_in,8);
 
-    bs_sbox((uint8_t*)&sbox_out, (uint8_t*)&sbox_in);
+    bs_sbox((uint8_t*)sbox_out, (uint8_t*)sbox_in);
     
-    printf("SBOX output : %08"PRIx64"\n", sbox_out);
+    printf("SBOX output : ");
+    hex_dump(sbox_out,8);
 
-    bs_sbox((uint8_t*)&sbox_rev, (uint8_t*)&sbox_out);
+    bs_sbox_rev((uint8_t*)sbox_rev, (uint8_t*)sbox_out);
 
-    printf("SBOX reverse : %08"PRIx64"\n", sbox_rev);
+    printf("SBOX reverse : ");
+    hex_dump(sbox_rev,8);
 
 
     return 0;
