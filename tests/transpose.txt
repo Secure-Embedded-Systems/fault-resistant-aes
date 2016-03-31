@@ -127,6 +127,7 @@ eeeeeeeeeeeeeeee
 eeeeeeeeeeeeeeee
 ffffffffffffffff
 ffffffffffffffff
+
 transpose:
 aaaaaaaaaaaaaaaa
 cccccccccccccccc
@@ -256,6 +257,7 @@ aaaaaaaaaaaaaaab
 cccccccccccccccd
 f0f0f0f0f0f0f0f1
 ff00ff00ff00ff01
+
 reverse transpose:
 7766554433221100
 ffeeddccbbaa9988
@@ -385,3 +387,4 @@ eeeeeeeeeeeeeeee
 eeeeeeeeeeeeeeee
 ffffffffffffffff
 ffffffffffffffff
+

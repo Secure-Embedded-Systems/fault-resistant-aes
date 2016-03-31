@@ -369,15 +369,7 @@ void bs_transpose_rev(WORD * transpose, WORD * blocks)
     }
 }
 
-
-void bs_dump(WORD * blocks)
-{
-    int i;
-    for (i=0; i < BLOCK_SIZE; i++)
-    {
-        printf("%" WPAD WFMT "\n",(blocks[i]));
-    }
-}
+#define bs_dump(x) word_dump(x, BLOCK_SIZE)
 
 void hex_dump(uint8_t * h, int len)
 {
@@ -414,6 +406,7 @@ void test_transpose()
     bs_dump(blocks_tmp);
 }
 
+
 void test_sbox()
 {
     WORD * sbox_in = (WORD * ) INPUT;
@@ -421,41 +414,27 @@ void test_sbox()
     WORD sbox_rev[8];
     int idx = 7;
 
-    printf("SBOX input : \n");
+    printf("SBOX input:\n");
     word_dump(sbox_in,8);
 
     bs_sbox(sbox_out, sbox_in);
     
-    printf("SBOX output : \n");
+    printf("SBOX output:\n");
     word_dump(sbox_out,8);
 
     bs_sbox_rev(sbox_rev, sbox_out);
 
-    printf("SBOX reverse : \n");
+    printf("SBOX reverse:\n");
     word_dump(sbox_rev,8);
 }
 
 int main()
 {
 #if 0
-    WORD blocks[ BLOCK_SIZE ];
-    WORD blocks_tmp[ BLOCK_SIZE ];
-    memset(blocks,0, sizeof(blocks));
-    memset(blocks_tmp,0, sizeof(blocks));
-    bs_transpose(blocks,(WORD*)INPUT);
-    bs_transpose_rev(blocks_tmp,blocks);
-    
-    printf("original:\n");
-    bs_dump((WORD*)INPUT);
-
-    printf("transpose:\n");
-    bs_dump(blocks);
-
-    printf("reverse transpose:\n");
-    bs_dump(blocks_tmp);
-#endif
-
     test_sbox();
+#endif
+    test_transpose();
+
 
     return 0;
 }
