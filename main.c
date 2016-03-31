@@ -63,6 +63,20 @@ void test_sbox()
 
 void test_shiftrow()
 {
+    word_t * B = (word_t * ) INPUT;
+    word_t * kr = (word_t * ) INPUT;
+    
+
+    word_t of = B[7] ^ B[47];
+
+    B[0] =                B[40] ^ B[80] ^ B[120] ^ kr[0] ^ of;
+    B[1] = B[0] ^ B[40] ^ B[41] ^ B[81] ^ B[121] ^ kr[1] ^ of;
+    B[2] = B[1] ^ B[41] ^ B[42] ^ B[82] ^ B[122] ^ kr[2];
+    B[3] = B[2] ^ B[42] ^ B[43] ^ B[83] ^ B[123] ^ kr[3] ^ of;
+    B[4] = B[3] ^ B[43] ^ B[44] ^ B[84] ^ B[124] ^ kr[4] ^ of;
+    B[5] = B[4] ^ B[44] ^ B[45] ^ B[85] ^ B[125] ^ kr[5];
+    B[6] = B[5] ^ B[45] ^ B[46] ^ B[86] ^ B[126] ^ kr[6];
+    B[7] = B[6] ^ B[46] ^ B[47] ^ B[87] ^ B[127] ^ kr[7];
 
 }
 
