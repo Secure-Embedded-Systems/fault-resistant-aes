@@ -9,15 +9,15 @@
 /*Input is U[0], U[1],...,U[7]*/
 /*Output is S[0], S[1],...,S[7]*/
 // http://cs-www.cs.yale.edu/homes/peralta/CircuitStuff/CMT.html
-void bs_sbox_rev(uint8_t W[8], uint8_t U[8])
+void bs_sbox_rev(WORD W[8], WORD U[8])
 {
-    uint8_t
+    WORD
         T1,T2,T3,T4,T5,T6,T8,
         T9,T10,T13,T14,T15,T16,
         T17,T18,T19,T20,T22,T23,T24,
         T25, T26, T27;
 
-    uint8_t 
+    WORD
         M1,M2,M3,M4,M5,M6,M7,M8,
         M9,M10,M11,M12,M13,M14,M15,
         M16,M17,M18,M19,M20,M21,M22,
@@ -28,14 +28,14 @@ void bs_sbox_rev(uint8_t W[8], uint8_t U[8])
         M51,M52,M53,M54,M55,M56,M57,
         M58,M59,M60,M61,M62,M63;
 
-    uint8_t
+    WORD
         P0,P1,P2,P3,P4,P5,P6,P7,P8,
         P9,P10,P11,P12,P13,P14,
         P15,P16,P17,P18,P19,P20,
         P21,P22,P23,P24,P25,P26,
         P27,P28,P29;
 
-    uint8_t Y5,
+    WORD Y5,
         R5, R13, R17, R18, R19;
 
 
@@ -169,16 +169,16 @@ void bs_sbox_rev(uint8_t W[8], uint8_t U[8])
 
 
 }
-void bs_sbox(uint8_t S[8], uint8_t U[8])
+void bs_sbox(WORD S[8], WORD U[8])
 {
 
-    uint8_t
+    WORD
         T1,T2,T3,T4,T5,T6,T7,T8,
         T9,T10,T11,T12,T13,T14,T15,T16,
         T17,T18,T19,T20,T21,T22,T23,T24,
         T25, T26, T27;
 
-    uint8_t 
+    WORD
         M1,M2,M3,M4,M5,M6,M7,M8,
         M9,M10,M11,M12,M13,M14,M15,
         M16,M17,M18,M19,M20,M21,M22,
@@ -189,7 +189,7 @@ void bs_sbox(uint8_t S[8], uint8_t U[8])
         M51,M52,M53,M54,M55,M56,M57,
         M58,M59,M60,M61,M62,M63;
 
-    uint8_t
+    WORD
         L0,L1,L2,L3,L4,L5,L6,L7,L8,
         L9,L10,L11,L12,L13,L14,
         L15,L16,L17,L18,L19,L20,
@@ -324,7 +324,6 @@ void bs_sbox(uint8_t S[8], uint8_t U[8])
         S[5] = L25 ^ L29;
         S[6] = ~(L13 ^ L27);
         S[7] = ~(L6 ^ L23);
-
 }
 
 // transpose a block
@@ -370,12 +369,13 @@ void bs_transpose_rev(WORD * transpose, WORD * blocks)
     }
 }
 
+
 void bs_dump(WORD * blocks)
 {
     int i;
     for (i=0; i < BLOCK_SIZE; i++)
     {
-        printf("%08"PRIx64"\n",(blocks[i]));
+        printf("%" WPAD WFMT "\n",(blocks[i]));
     }
 }
 
@@ -386,7 +386,54 @@ void hex_dump(uint8_t * h, int len)
     printf("\n");
 }
 
+void word_dump(WORD * h, int len)
+{
+    while(len--)
+        printf("%" WPAD WFMT "\n",*h++);
+    printf("\n");
+}
+
 extern uint8_t INPUT[WORD_SIZE/8][BLOCK_SIZE/8 + 1];
+
+void test_transpose()
+{
+    WORD blocks[ BLOCK_SIZE ];
+    WORD blocks_tmp[ BLOCK_SIZE ];
+    memset(blocks,0, sizeof(blocks));
+    memset(blocks_tmp,0, sizeof(blocks));
+    bs_transpose(blocks,(WORD*)INPUT);
+    bs_transpose_rev(blocks_tmp,blocks);
+    
+    printf("original:\n");
+    bs_dump((WORD*)INPUT);
+
+    printf("transpose:\n");
+    bs_dump(blocks);
+
+    printf("reverse transpose:\n");
+    bs_dump(blocks_tmp);
+}
+
+void test_sbox()
+{
+    WORD * sbox_in = (WORD * ) INPUT;
+    WORD sbox_out[8];
+    WORD sbox_rev[8];
+    int idx = 7;
+
+    printf("SBOX input : \n");
+    word_dump(sbox_in,8);
+
+    bs_sbox(sbox_out, sbox_in);
+    
+    printf("SBOX output : \n");
+    word_dump(sbox_out,8);
+
+    bs_sbox_rev(sbox_rev, sbox_out);
+
+    printf("SBOX reverse : \n");
+    word_dump(sbox_rev,8);
+}
 
 int main()
 {
@@ -404,28 +451,11 @@ int main()
     printf("transpose:\n");
     bs_dump(blocks);
 
-    printf("double transpose:\n");
+    printf("reverse transpose:\n");
     bs_dump(blocks_tmp);
 #endif
 
-    uint8_t sbox_in[] = {0x21,0x2,0x3,0x4,0x5,0x6,0x7,0x8};
-    uint8_t sbox_out[8];
-    uint8_t sbox_rev[8];
-    int idx = 7;
-
-    printf("SBOX input : ");
-    hex_dump(sbox_in,8);
-
-    bs_sbox((uint8_t*)sbox_out, (uint8_t*)sbox_in);
-    
-    printf("SBOX output : ");
-    hex_dump(sbox_out,8);
-
-    bs_sbox_rev((uint8_t*)sbox_rev, (uint8_t*)sbox_out);
-
-    printf("SBOX reverse : ");
-    hex_dump(sbox_rev,8);
-
+    test_sbox();
 
     return 0;
 }
