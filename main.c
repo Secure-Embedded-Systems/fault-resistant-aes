@@ -66,6 +66,13 @@ void test_shiftrow(word_t * Bp, word_t * B, word_t * kr)
 
     word_t of = B[7] ^ B[47];
 
+    //  of = (B[0] & B[5] & 0x80)>>7;
+    //  Bp = B[0] << 1;
+    //  Bp = Bp ^ (B[5]<<1)
+    //  Bp = Bp ^ B[5]
+    //  Bp = Bp ^ B[10]
+    //  Bp = Bp ^ B[15]
+    //  Bp = Bp ^ kr[0]
     Bp[0] =                B[40] ^ B[80] ^ B[120] ^ kr[0] ^ of;
     Bp[1] = B[0] ^ B[40] ^ B[41] ^ B[81] ^ B[121] ^ kr[1] ^ of;
     Bp[2] = B[1] ^ B[41] ^ B[42] ^ B[82] ^ B[122] ^ kr[2];
