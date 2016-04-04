@@ -19,7 +19,7 @@ void word_dump(word_t * h, int len)
     printf("\n");
 }
 
-extern uint8_t INPUT[word_t_SIZE/8][BLOCK_SIZE/8 + 1];
+extern uint8_t INPUT[WORD_SIZE/8][BLOCK_SIZE/8 + 1];
 
 void test_transpose()
 {
@@ -61,23 +61,33 @@ void test_sbox()
     word_dump(sbox_rev,8);
 }
 
-void test_shiftrow()
+void test_shiftrow(word_t * Bp, word_t * B, word_t * kr)
 {
-    word_t * B = (word_t * ) INPUT;
-    word_t * kr = (word_t * ) INPUT;
-    
 
     word_t of = B[7] ^ B[47];
 
-    B[0] =                B[40] ^ B[80] ^ B[120] ^ kr[0] ^ of;
-    B[1] = B[0] ^ B[40] ^ B[41] ^ B[81] ^ B[121] ^ kr[1] ^ of;
-    B[2] = B[1] ^ B[41] ^ B[42] ^ B[82] ^ B[122] ^ kr[2];
-    B[3] = B[2] ^ B[42] ^ B[43] ^ B[83] ^ B[123] ^ kr[3] ^ of;
-    B[4] = B[3] ^ B[43] ^ B[44] ^ B[84] ^ B[124] ^ kr[4] ^ of;
-    B[5] = B[4] ^ B[44] ^ B[45] ^ B[85] ^ B[125] ^ kr[5];
-    B[6] = B[5] ^ B[45] ^ B[46] ^ B[86] ^ B[126] ^ kr[6];
-    B[7] = B[6] ^ B[46] ^ B[47] ^ B[87] ^ B[127] ^ kr[7];
+    Bp[0] =                B[40] ^ B[80] ^ B[120] ^ kr[0] ^ of;
+    Bp[1] = B[0] ^ B[40] ^ B[41] ^ B[81] ^ B[121] ^ kr[1] ^ of;
+    Bp[2] = B[1] ^ B[41] ^ B[42] ^ B[82] ^ B[122] ^ kr[2];
+    Bp[3] = B[2] ^ B[42] ^ B[43] ^ B[83] ^ B[123] ^ kr[3] ^ of;
+    Bp[4] = B[3] ^ B[43] ^ B[44] ^ B[84] ^ B[124] ^ kr[4] ^ of;
+    Bp[5] = B[4] ^ B[44] ^ B[45] ^ B[85] ^ B[125] ^ kr[5];
+    Bp[6] = B[5] ^ B[45] ^ B[46] ^ B[86] ^ B[126] ^ kr[6];
+    Bp[7] = B[6] ^ B[46] ^ B[47] ^ B[87] ^ B[127] ^ kr[7];
 
+}
+
+void test_shiftrow_rev(word_t * Bp, word_t * B, word_t * kr)
+{
+    B[7] = B[6] ^ B[46] ^ B[47] ^ B[87] ^ B[127] ^ kr[7];
+    word_t of = B[7] ^ B[47];
+    B[6] = B[5] ^ B[45] ^ B[46] ^ B[86] ^ B[126] ^ kr[6];
+    B[5] = B[4] ^ B[44] ^ B[45] ^ B[85] ^ B[125] ^ kr[5];
+    B[4] = B[3] ^ B[43] ^ B[44] ^ B[84] ^ B[124] ^ kr[4] ^ of;
+    B[3] = B[2] ^ B[42] ^ B[43] ^ B[83] ^ B[123] ^ kr[3] ^ of;
+    B[2] = B[1] ^ B[41] ^ B[42] ^ B[82] ^ B[122] ^ kr[2];
+    B[1] = B[0] ^ B[40] ^ B[41] ^ B[81] ^ B[121] ^ kr[1] ^ of;
+    B[0] =                B[40] ^ B[80] ^ B[120] ^ kr[0] ^ of;
 }
 
 int main()
@@ -86,7 +96,24 @@ int main()
     test_transpose();
     test_sbox();
 #endif
-    test_shiftrow();
+    word_t shiftrow[8 * BLOCK_SIZE];
+    word_t shiftrow_out[8 * BLOCK_SIZE];
+    word_t kr[8 * WORD_SIZE/8];
+
+    memmove(shiftrow, INPUT[0], 8 * BLOCK_SIZE);
+    memmove(kr, INPUT[1], 8 * WORD_SIZE/8);
+
+    printf("before:\n");
+    word_dump(shiftrow,8);
+
+    test_shiftrow(shiftrow_out,shiftrow,kr);
+
+    printf("after:\n");
+    word_dump(shiftrow_out,8);
+    
+    test_shiftrow_rev(shiftrow,shiftrow_out,kr);
+    printf("reverse:\n");
+    word_dump(shiftrow,8);
 
     return 0;
 }

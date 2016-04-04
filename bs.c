@@ -331,15 +331,15 @@ void bs_transpose(word_t * transpose, word_t * blocks)
 {
     int i,j,k;
     word_t w;
-    for(k=0; k < word_t_SIZE; k++)
+    for(k=0; k < WORD_SIZE; k++)
     {
-        for (i=0; i < word_tS_PER_BLOCK; i++)
+        for (i=0; i < WORDS_PER_BLOCK; i++)
         {
-            w = blocks[k * word_tS_PER_BLOCK + i];
-            for(j=0; j < word_t_SIZE; j++)
+            w = blocks[k * WORDS_PER_BLOCK + i];
+            for(j=0; j < WORD_SIZE; j++)
             {
                 // TODO make const time
-                transpose[i*word_t_SIZE + j] |= (w & (ONE << j)) ? (ONE<<k) : 0;
+                transpose[i*WORD_SIZE + j] |= (w & (ONE << j)) ? (ONE<<k) : 0;
             }
         }
     }
@@ -352,11 +352,11 @@ void bs_transpose_rev(word_t * transpose, word_t * blocks)
     for(k=0; k < BLOCK_SIZE; k++)
     {
         w = blocks[k];
-        for(j=0; j < word_t_SIZE; j++)
+        for(j=0; j < WORD_SIZE; j++)
         {
-            word_t bit = (w & (ONE << j)) ? (ONE << (k % word_t_SIZE)) : 0;
+            word_t bit = (w & (ONE << j)) ? (ONE << (k % WORD_SIZE)) : 0;
             // TODO make const time
-            if ( k >= word_t_SIZE )
+            if ( k >= WORD_SIZE )
             {
                 transpose[j * 2 + 1] |= bit;
             }

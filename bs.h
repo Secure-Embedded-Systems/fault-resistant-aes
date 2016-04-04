@@ -5,25 +5,25 @@
 #include <inttypes.h>
 
 #define BLOCK_SIZE      128
-#define word_t_SIZE       64
-#define word_tS_PER_BLOCK  (BLOCK_SIZE / word_t_SIZE)
+#define WORD_SIZE       64
+#define WORDS_PER_BLOCK  (BLOCK_SIZE / WORD_SIZE)
 
-#if (word_t_SIZE==64)
+#if (WORD_SIZE==64)
     typedef uint64_t    word_t;
     #define ONE         1ULL
     #define WFMT        PRIx64
     #define WPAD        "016"
-#elif (word_t_SIZE==32)
+#elif (WORD_SIZE==32)
     typedef uint32_t    word_t;
     #define ONE         1UL
     #define WFMT        PRIx32
     #define WPAD        "08"
-#elif (word_t_SIZE==16)
+#elif (WORD_SIZE==16)
     typedef uint16_t    word_t;
     #define ONE         1
     #define WFMT        PRIx16
     #define WPAD        "04"
-#elif (word_t_SIZE==8)
+#elif (WORD_SIZE==8)
     typedef uint8_t     word_t;
     #define ONE         1
     #define WFMT        PRIx8
