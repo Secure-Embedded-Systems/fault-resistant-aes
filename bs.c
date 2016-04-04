@@ -355,15 +355,7 @@ void bs_transpose_rev(word_t * transpose, word_t * blocks)
         for(j=0; j < WORD_SIZE; j++)
         {
             word_t bit = (w & (ONE << j)) ? (ONE << (k % WORD_SIZE)) : 0;
-            // TODO make const time
-            if ( k >= WORD_SIZE )
-            {
-                transpose[j * 2 + 1] |= bit;
-            }
-            else
-            {
-                transpose[j * 2] |= bit;
-            }
+            transpose[j * 2 + (k >= WORD_SIZE)] |= bit;
         }
     }
 }
