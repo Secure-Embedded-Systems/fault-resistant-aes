@@ -69,8 +69,8 @@ void test_sbox()
 void test_mixcolumn(word_t * Bp, word_t * B)
 {
     int i = 0;
-    for (; i < BLOCK_SIZE / 4; i += 8)
-    {
+    //for (; i < BLOCK_SIZE / 4; i += 8)
+    //{
     //  of0 = (B[0] & 0x80);
     //  of5 = (B[5] & 0x80);
     //  of = B[0] ^ [5];
@@ -117,7 +117,6 @@ void test_mixcolumn(word_t * Bp, word_t * B)
     //// + A3
     //  Bp = Bp ^ (B[15])
 
-    /*
     of = B[A1+7] ^ B[A2+7];
 
     //          A0      2*A1        2*A2      A2        A3
@@ -129,7 +128,6 @@ void test_mixcolumn(word_t * Bp, word_t * B)
     Bp[A1+5] = B[A0+5] ^ B[A1+4] ^ B[A2+4] ^ B[A2+5] ^ B[A3+5];
     Bp[A1+6] = B[A0+6] ^ B[A1+5] ^ B[A2+5] ^ B[A2+6] ^ B[A3+6];
     Bp[A1+7] = B[A0+7] ^ B[A1+6] ^ B[A2+6] ^ B[A2+7] ^ B[A3+7];
-    */
 
     //  of0 = (B[10] & 0x80);
     //  of5 = (B[15] & 0x80);
@@ -148,7 +146,6 @@ void test_mixcolumn(word_t * Bp, word_t * B)
     //  Bp = Bp ^ (B[15]<<1)
 
 
-    /*
     of = B[A2+7] ^ B[A3+7];
 
     //          A0      A1          2*A2       2*A3         A3
@@ -160,7 +157,6 @@ void test_mixcolumn(word_t * Bp, word_t * B)
     Bp[A2+5] = B[A0+5] ^ B[A1+5] ^ B[A2+4] ^ B[A3+4] ^ B[A3+5];
     Bp[A2+6] = B[A0+6] ^ B[A1+6] ^ B[A2+5] ^ B[A3+5] ^ B[A3+6];
     Bp[A2+7] = B[A0+7] ^ B[A1+7] ^ B[A2+6] ^ B[A3+6] ^ B[A3+7];
-    */
 
     //  of0 = (B[0] & 0x80);
     //  of5 = (B[15] & 0x80);
@@ -178,7 +174,6 @@ void test_mixcolumn(word_t * Bp, word_t * B)
     //// + 2 * A3
     //  Bp = Bp ^ (B[15]<<1)
 
-    /*
     of = B[A0+7] ^ B[A3+7];
 
     //        2*A0       A0         A1         A2       2*A3
@@ -190,8 +185,7 @@ void test_mixcolumn(word_t * Bp, word_t * B)
     Bp[A3+5] = B[A0+5] ^ B[A0+4] ^ B[A1+5] ^ B[A2+5] ^ B[A3+4];
     Bp[A3+6] = B[A0+6] ^ B[A0+5] ^ B[A1+6] ^ B[A2+6] ^ B[A3+5];
     Bp[A3+7] = B[A0+7] ^ B[A0+6] ^ B[A1+7] ^ B[A2+7] ^ B[A3+6];
-    */
-    }
+    //}
 
 
 }
@@ -206,22 +200,25 @@ void test_mixcolumn_rev(word_t * Bp, word_t * B)
         (*state)[i][3] = Multiply(a, 0x0b) ^ Multiply(b, 0x0d) ^ Multiply(c, 0x09) ^ Multiply(d, 0x0e);
     */
 
-    word_t of0 = (B[A0+7] ^ B[A1+7]);
-    word_t of1 = (B[A0+6] ^ B[A1+6]);
-    word_t of2 = (B[A0+5] ^ B[A1+5]);
-    word_t of3 = (B[A0+4] ^ B[A1+4]);
+                    /* A0 * 0b1110           */  /* A1 * 0b1011         */ /* A2 * 0b1101     */ /* A3 * 0b1001 */
+    word_t of0 = (  (B[A0+7] ^ B[A0+6] ^ B[A0+5]) ^ (B[A1 + 7] ^ B[A1+5]) ^ (B[A2+6] ^ B[A2+5]) ^ ( B[A3+5] ));       // 2 bit
+    word_t of1 = (            (B[A0+7] ^ B[A0+6]) ^ (            B[A1+6]) ^ (B[A2+7] ^ B[A2+6]) ^ ( B[A3+6] ));       // 3 bit
+    word_t of2 = (                      (B[A0+7]) ^ (            B[A1+7]) ^ (          B[A2+7]) ^ ( B[A3+7] ));       // 4 bit
+    word_t of3 = (0);       // n/a
 
-    word_t of = B[A0+7] ^ B[A1+7];
+    //          1110      1011    1101      1001
+    // A0 = A0 * 14 + A1 * 11 + A2 * 13 + A3 * 9
+    // A0 = A0 * (2+4+8) + A1 * (1+2+8) + A2 * (1+4+8) + A3 * (1+8)
 
-    //          2*A0     2*A1          A1      A2           A3
-    Bp[A0+0] =                     B[A1+0] ^ B[A2+0] ^ B[A3+0] ^ of0;
-    Bp[A0+1] = B[A0+0] ^ B[A1+0] ^ B[A1+1] ^ B[A2+1] ^ B[A3+1] ^ of0 ^ of1;
-    Bp[A0+2] = B[A0+1] ^ B[A1+1] ^ B[A1+2] ^ B[A2+2] ^ B[A3+2];      ^ of1;
-    Bp[A0+3] = B[A0+2] ^ B[A1+2] ^ B[A1+3] ^ B[A2+3] ^ B[A3+3] ^ of0       ^ of2;
-    Bp[A0+4] = B[A0+3] ^ B[A1+3] ^ B[A1+4] ^ B[A2+4] ^ B[A3+4] ^ of0 ^ of1 ^ of2;
-    Bp[A0+5] = B[A0+4] ^ B[A1+4] ^ B[A1+5] ^ B[A2+5] ^ B[A3+5];      ^ of1 ^ of2;
-    Bp[A0+6] = B[A0+5] ^ B[A1+5] ^ B[A1+6] ^ B[A2+6] ^ B[A3+6]             ^ of2;
-    Bp[A0+7] = B[A0+6] ^ B[A1+6] ^ B[A1+7] ^ B[A2+7] ^ B[A3+7];
+    //          2*A0      4*A0     8*A0      8*A1     2*A1          A1      A2        4*A2     8*A2          A3    8*A3
+    Bp[A0+0] =                                                   B[A1+0] ^ B[A2+0]                     ^ B[A3+0]           ^ of0;
+    Bp[A0+1] = B[A0+0]                               ^ B[A1+0] ^ B[A1+1] ^ B[A2+1]                     ^ B[A3+1]           ^ of0 ^ of1;
+    Bp[A0+2] = B[A0+1] ^ B[A0+0]                     ^ B[A1+1] ^ B[A1+2] ^ B[A2+2] ^ B[A2+0]           ^ B[A3+2]                 ^ of1 ^ of2;
+    Bp[A0+3] = B[A0+2] ^ B[A0+1] ^ B[A0+0] ^ B[A1+0] ^ B[A1+2] ^ B[A1+3] ^ B[A2+3] ^ B[A2+1] ^ B[A2+0] ^ B[A3+3] ^ B[A3+0] ^ of0       ^ of2 ^ of3;
+    Bp[A0+4] = B[A0+3] ^ B[A0+2] ^ B[A0+1] ^ B[A1+1] ^ B[A1+3] ^ B[A1+4] ^ B[A2+4] ^ B[A2+2] ^ B[A2+1] ^ B[A3+4] ^ B[A3+1] ^ of0 ^ of1       ^ of3;
+    Bp[A0+5] = B[A0+4] ^ B[A0+3] ^ B[A0+2] ^ B[A1+2] ^ B[A1+4] ^ B[A1+5] ^ B[A2+5] ^ B[A2+3] ^ B[A2+2] ^ B[A3+5] ^ B[A3+2]       ^ of1 ^ of2;
+    Bp[A0+6] = B[A0+5] ^ B[A0+4] ^ B[A0+3] ^ B[A1+3] ^ B[A1+5] ^ B[A1+6] ^ B[A2+6] ^ B[A2+4] ^ B[A2+3] ^ B[A3+6] ^ B[A3+3]             ^ of2 ^ of3;
+    Bp[A0+7] = B[A0+6] ^ B[A0+5] ^ B[A0+4] ^ B[A1+4] ^ B[A1+6] ^ B[A1+7] ^ B[A2+7] ^ B[A2+5] ^ B[A2+4] ^ B[A3+7] ^ B[A3+4]                   ^ of3;
 
 }
 
