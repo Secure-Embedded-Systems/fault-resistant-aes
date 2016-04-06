@@ -41,8 +41,8 @@ void bs_sbox_rev(word_t W[8], word_t U[8]);
 void bs_shiftrow();
 void bs_shiftrow_rev();
 
-void bs_mixcolumn();
-void bs_mixcolumn_rev();
+void bs_mixcolumns(word_t * Bp, word_t * B);
+void bs_mixcolumns_rev();
 
 void bs_addroundkey();
 void bs_addroundkey_rev();
