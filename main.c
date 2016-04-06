@@ -62,12 +62,10 @@ void test_sbox()
 }
 void test_mixcolumns()
 {
-    word_t mixcolumn[8 * BLOCK_SIZE];
-    word_t mixcolumn_out[8 * BLOCK_SIZE];
-    word_t kr[8 * WORD_SIZE/8];
+    word_t mixcolumn[BLOCK_SIZE];
+    word_t mixcolumn_out[BLOCK_SIZE];
 
     memmove(mixcolumn, INPUT[0], 8 * BLOCK_SIZE);
-    memmove(kr, INPUT[1], 8 * WORD_SIZE/8);
 
     printf("MIXCOLUMNS input:\n");
     word_dump(mixcolumn,BLOCK_SIZE);
@@ -84,12 +82,10 @@ void test_mixcolumns()
 }
 void test_shiftrows()
 {
-    word_t shiftrow[8 * BLOCK_SIZE];
-    word_t shiftrow_out[8 * BLOCK_SIZE];
-    word_t kr[8 * WORD_SIZE/8];
+    word_t shiftrow[BLOCK_SIZE];
+    word_t shiftrow_out[BLOCK_SIZE];
 
     memmove(shiftrow, INPUT[0], 8 * BLOCK_SIZE);
-    memmove(kr, INPUT[1], 8 * WORD_SIZE/8);
     printf("SHIFTROWS input:\n");
     word_dump(shiftrow,BLOCK_SIZE);
     
@@ -102,7 +98,78 @@ void test_shiftrows()
    
     printf("SHIFTROWS reverse:\n");
     word_dump(shiftrow,BLOCK_SIZE);
+}
 
+void bs_addroundkey(word_t * B, word_t * rk)
+{
+    int i;
+    for (i = 0; i < BLOCK_SIZE; i++)
+        B[i] ^= rk[i];
+}
+
+void bs_apply_sbox(word_t * output, word_t * input)
+{
+    int i;
+    for(i=0; i < BLOCK_SIZE; i+=8)
+    {
+        bs_sbox(output+i, input+i);
+    }
+}
+
+void bs_apply_sbox_rev(word_t * output, word_t * input)
+{
+    int i;
+    for(i=0; i < BLOCK_SIZE; i+=8)
+    {
+        bs_sbox_rev(output+i, input+i);
+    }
+}
+
+void test_aes()
+{
+    word_t input[BLOCK_SIZE];
+    word_t output[BLOCK_SIZE];
+    word_t rk[11][BLOCK_SIZE];
+    int i;
+    for (i=0; i<11; i++)
+    {
+        memset(rk[11], i, BLOCK_SIZE);
+    }
+
+    // encrypt
+
+    int round = 0;
+    for(; round < 9; round++)
+    {
+        bs_apply_sbox(output,input);
+        bs_shiftrows(input,output);
+        bs_mixcolumns(output,input);
+        bs_addroundkey(output,rk[i]);
+        memmove(input,output,BLOCK_SIZE * WORD_SIZE);
+    }
+    bs_apply_sbox(input,output);
+    bs_shiftrows(output,input);
+    bs_addroundkey(output,rk[9]);
+
+    // decrypt
+
+    bs_addroundkey(output,rk[9]);
+    round = 8;
+    for(; round > 0; round--)
+    {
+        bs_shiftrows_rev(input,output);
+        bs_apply_sbox_rev(output,input);
+        bs_addroundkey(output,rk[i]);
+        bs_mixcolumns(input,output);
+        memmove(output,input,BLOCK_SIZE * WORD_SIZE);
+    }
+    
+    bs_shiftrows_rev(input,output);
+    bs_apply_sbox_rev(output,input);
+    bs_addroundkey(output,rk[0]);
+
+    printf("AES output:\n");
+    word_dump(output,BLOCK_SIZE);
 
 }
 
@@ -113,8 +180,10 @@ int main()
     test_transpose();
     test_sbox();
     test_mixcolumns();
-#endif
     test_shiftrows();
+#endif
+
+    test_aes();
 
     return 0;
 }
