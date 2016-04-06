@@ -1,4 +1,4 @@
-before:
+MIXCOLUMNS input:
 7766554433221100
 ffeeddccbbaa9988
 1111111111111111
@@ -128,7 +128,7 @@ eeeeeeeeeeeeeeee
 ffffffffffffffff
 ffffffffffffffff
 
-after:
+MIXCOLUMNS output:
 4444444444444444
 7766554433221100
 aabb8899eeffccdd
@@ -258,7 +258,7 @@ eeeeeeeeeeeeeeee
 3333333333333333
 3333333333333333
 
-reverse:
+MIXCOLUMNS reverse:
 7766554433221100
 ffeeddccbbaa9988
 1111111111111111

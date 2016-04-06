@@ -30,13 +30,13 @@ void test_transpose()
     bs_transpose(blocks,(word_t*)INPUT);
     bs_transpose_rev(blocks_tmp,blocks);
     
-    printf("original:\n");
+    printf("TRANSPOSE original:\n");
     bs_dump((word_t*)INPUT);
 
-    printf("transpose:\n");
+    printf("TRANSPOSE output:\n");
     bs_dump(blocks);
 
-    printf("reverse transpose:\n");
+    printf("TRANSPOSE reverse:\n");
     bs_dump(blocks_tmp);
 }
 
@@ -69,17 +69,17 @@ void test_mixcolumns()
     memmove(mixcolumn, INPUT[0], 8 * BLOCK_SIZE);
     memmove(kr, INPUT[1], 8 * WORD_SIZE/8);
 
-    printf("before:\n");
+    printf("MIXCOLUMNS input:\n");
     word_dump(mixcolumn,BLOCK_SIZE);
 
     bs_mixcolumns(mixcolumn_out,mixcolumn);
 
-    printf("after:\n");
+    printf("MIXCOLUMNS output:\n");
     word_dump(mixcolumn_out,BLOCK_SIZE);
     
     memset(mixcolumn,0,sizeof(mixcolumn));
     bs_mixcolumns_rev(mixcolumn,mixcolumn_out);
-    printf("reverse:\n");
+    printf("MIXCOLUMNS reverse:\n");
     word_dump(mixcolumn,BLOCK_SIZE);
 }
 
