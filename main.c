@@ -82,7 +82,29 @@ void test_mixcolumns()
     printf("MIXCOLUMNS reverse:\n");
     word_dump(mixcolumn,BLOCK_SIZE);
 }
+void test_shiftrows()
+{
+    word_t shiftrow[8 * BLOCK_SIZE];
+    word_t shiftrow_out[8 * BLOCK_SIZE];
+    word_t kr[8 * WORD_SIZE/8];
 
+    memmove(shiftrow, INPUT[0], 8 * BLOCK_SIZE);
+    memmove(kr, INPUT[1], 8 * WORD_SIZE/8);
+    printf("SHIFTROWS input:\n");
+    word_dump(shiftrow,BLOCK_SIZE);
+    
+    bs_shiftrows(shiftrow_out,shiftrow);
+    printf("SHIFTROWS output:\n");
+    word_dump(shiftrow_out,BLOCK_SIZE);
+    
+    memset(shiftrow,0,sizeof(shiftrow));
+    bs_shiftrows_rev(shiftrow,shiftrow_out);
+   
+    printf("SHIFTROWS reverse:\n");
+    word_dump(shiftrow,BLOCK_SIZE);
+
+
+}
 
 
 int main()
@@ -90,9 +112,9 @@ int main()
 #if 0
     test_transpose();
     test_sbox();
-#endif
-    
     test_mixcolumns();
+#endif
+    test_shiftrows();
 
     return 0;
 }

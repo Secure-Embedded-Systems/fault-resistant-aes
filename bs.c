@@ -361,6 +361,300 @@ void bs_transpose_rev(word_t * transpose, word_t * blocks)
 }
 
 
+#define B0          0
+#define B1          32
+#define B2          64
+#define B3          96
+
+#define B0_shift        (BLOCK_SIZE/16)*0
+#define B1_shift        (BLOCK_SIZE/16)*1
+#define B2_shift        (BLOCK_SIZE/16)*2
+#define B3_shift        (BLOCK_SIZE/16)*3
+#define B_MOD           (BLOCK_SIZE/4)
+
+
+void bs_shiftrows(word_t * Bp, word_t * B)
+{
+    // Row 0
+    Bp[B0 + 0] = B[B0 + (0 + B0_shift) % B_MOD];
+    Bp[B0 + 1] = B[B0 + (1 + B0_shift) % B_MOD];
+    Bp[B0 + 2] = B[B0 + (2 + B0_shift) % B_MOD];
+    Bp[B0 + 3] = B[B0 + (3 + B0_shift) % B_MOD];
+    Bp[B0 + 4] = B[B0 + (4 + B0_shift) % B_MOD];
+    Bp[B0 + 5] = B[B0 + (5 + B0_shift) % B_MOD];
+    Bp[B0 + 6] = B[B0 + (6 + B0_shift) % B_MOD];
+    Bp[B0 + 7] = B[B0 + (7 + B0_shift) % B_MOD];
+    Bp[B0 + 8] = B[B0 + (8 + B0_shift) % B_MOD];
+    Bp[B0 + 9] = B[B0 + (9 + B0_shift) % B_MOD];
+    Bp[B0 + 10] = B[B0 + (10 + B0_shift) % B_MOD];
+    Bp[B0 + 11] = B[B0 + (11 + B0_shift) % B_MOD];
+    Bp[B0 + 12] = B[B0 + (12 + B0_shift) % B_MOD];
+    Bp[B0 + 13] = B[B0 + (13 + B0_shift) % B_MOD];
+    Bp[B0 + 14] = B[B0 + (14 + B0_shift) % B_MOD];
+    Bp[B0 + 15] = B[B0 + (15 + B0_shift) % B_MOD];
+    Bp[B0 + 16] = B[B0 + (16 + B0_shift) % B_MOD];
+    Bp[B0 + 17] = B[B0 + (17 + B0_shift) % B_MOD];
+    Bp[B0 + 18] = B[B0 + (18 + B0_shift) % B_MOD];
+    Bp[B0 + 19] = B[B0 + (19 + B0_shift) % B_MOD];
+    Bp[B0 + 20] = B[B0 + (20 + B0_shift) % B_MOD];
+    Bp[B0 + 21] = B[B0 + (21 + B0_shift) % B_MOD];
+    Bp[B0 + 22] = B[B0 + (22 + B0_shift) % B_MOD];
+    Bp[B0 + 23] = B[B0 + (23 + B0_shift) % B_MOD];
+    Bp[B0 + 24] = B[B0 + (24 + B0_shift) % B_MOD];
+    Bp[B0 + 25] = B[B0 + (25 + B0_shift) % B_MOD];
+    Bp[B0 + 26] = B[B0 + (26 + B0_shift) % B_MOD];
+    Bp[B0 + 27] = B[B0 + (27 + B0_shift) % B_MOD];
+    Bp[B0 + 28] = B[B0 + (28 + B0_shift) % B_MOD];
+    Bp[B0 + 29] = B[B0 + (29 + B0_shift) % B_MOD];
+    Bp[B0 + 30] = B[B0 + (30 + B0_shift) % B_MOD];
+    Bp[B0 + 31] = B[B0 + (31 + B0_shift) % B_MOD];
+
+    // Row 1
+    Bp[B1 + 0] = B[B1 + (0 + B1_shift) % B_MOD];
+    Bp[B1 + 1] = B[B1 + (1 + B1_shift) % B_MOD];
+    Bp[B1 + 2] = B[B1 + (2 + B1_shift) % B_MOD];
+    Bp[B1 + 3] = B[B1 + (3 + B1_shift) % B_MOD];
+    Bp[B1 + 4] = B[B1 + (4 + B1_shift) % B_MOD];
+    Bp[B1 + 5] = B[B1 + (5 + B1_shift) % B_MOD];
+    Bp[B1 + 6] = B[B1 + (6 + B1_shift) % B_MOD];
+    Bp[B1 + 7] = B[B1 + (7 + B1_shift) % B_MOD];
+    Bp[B1 + 8] = B[B1 + (8 + B1_shift) % B_MOD];
+    Bp[B1 + 9] = B[B1 + (9 + B1_shift) % B_MOD];
+    Bp[B1 + 10] = B[B1 + (10 + B1_shift) % B_MOD];
+    Bp[B1 + 11] = B[B1 + (11 + B1_shift) % B_MOD];
+    Bp[B1 + 12] = B[B1 + (12 + B1_shift) % B_MOD];
+    Bp[B1 + 13] = B[B1 + (13 + B1_shift) % B_MOD];
+    Bp[B1 + 14] = B[B1 + (14 + B1_shift) % B_MOD];
+    Bp[B1 + 15] = B[B1 + (15 + B1_shift) % B_MOD];
+    Bp[B1 + 16] = B[B1 + (16 + B1_shift) % B_MOD];
+    Bp[B1 + 17] = B[B1 + (17 + B1_shift) % B_MOD];
+    Bp[B1 + 18] = B[B1 + (18 + B1_shift) % B_MOD];
+    Bp[B1 + 19] = B[B1 + (19 + B1_shift) % B_MOD];
+    Bp[B1 + 20] = B[B1 + (20 + B1_shift) % B_MOD];
+    Bp[B1 + 21] = B[B1 + (21 + B1_shift) % B_MOD];
+    Bp[B1 + 22] = B[B1 + (22 + B1_shift) % B_MOD];
+    Bp[B1 + 23] = B[B1 + (23 + B1_shift) % B_MOD];
+    Bp[B1 + 24] = B[B1 + (24 + B1_shift) % B_MOD];
+    Bp[B1 + 25] = B[B1 + (25 + B1_shift) % B_MOD];
+    Bp[B1 + 26] = B[B1 + (26 + B1_shift) % B_MOD];
+    Bp[B1 + 27] = B[B1 + (27 + B1_shift) % B_MOD];
+    Bp[B1 + 28] = B[B1 + (28 + B1_shift) % B_MOD];
+    Bp[B1 + 29] = B[B1 + (29 + B1_shift) % B_MOD];
+    Bp[B1 + 30] = B[B1 + (30 + B1_shift) % B_MOD];
+    Bp[B1 + 31] = B[B1 + (31 + B1_shift) % B_MOD];
+
+    // Row 2
+    Bp[B2 + 0] = B[B2 + (0 + B2_shift) % B_MOD];
+    Bp[B2 + 1] = B[B2 + (1 + B2_shift) % B_MOD];
+    Bp[B2 + 2] = B[B2 + (2 + B2_shift) % B_MOD];
+    Bp[B2 + 3] = B[B2 + (3 + B2_shift) % B_MOD];
+    Bp[B2 + 4] = B[B2 + (4 + B2_shift) % B_MOD];
+    Bp[B2 + 5] = B[B2 + (5 + B2_shift) % B_MOD];
+    Bp[B2 + 6] = B[B2 + (6 + B2_shift) % B_MOD];
+    Bp[B2 + 7] = B[B2 + (7 + B2_shift) % B_MOD];
+    Bp[B2 + 8] = B[B2 + (8 + B2_shift) % B_MOD];
+    Bp[B2 + 9] = B[B2 + (9 + B2_shift) % B_MOD];
+    Bp[B2 + 10] = B[B2 + (10 + B2_shift) % B_MOD];
+    Bp[B2 + 11] = B[B2 + (11 + B2_shift) % B_MOD];
+    Bp[B2 + 12] = B[B2 + (12 + B2_shift) % B_MOD];
+    Bp[B2 + 13] = B[B2 + (13 + B2_shift) % B_MOD];
+    Bp[B2 + 14] = B[B2 + (14 + B2_shift) % B_MOD];
+    Bp[B2 + 15] = B[B2 + (15 + B2_shift) % B_MOD];
+    Bp[B2 + 16] = B[B2 + (16 + B2_shift) % B_MOD];
+    Bp[B2 + 17] = B[B2 + (17 + B2_shift) % B_MOD];
+    Bp[B2 + 18] = B[B2 + (18 + B2_shift) % B_MOD];
+    Bp[B2 + 19] = B[B2 + (19 + B2_shift) % B_MOD];
+    Bp[B2 + 20] = B[B2 + (20 + B2_shift) % B_MOD];
+    Bp[B2 + 21] = B[B2 + (21 + B2_shift) % B_MOD];
+    Bp[B2 + 22] = B[B2 + (22 + B2_shift) % B_MOD];
+    Bp[B2 + 23] = B[B2 + (23 + B2_shift) % B_MOD];
+    Bp[B2 + 24] = B[B2 + (24 + B2_shift) % B_MOD];
+    Bp[B2 + 25] = B[B2 + (25 + B2_shift) % B_MOD];
+    Bp[B2 + 26] = B[B2 + (26 + B2_shift) % B_MOD];
+    Bp[B2 + 27] = B[B2 + (27 + B2_shift) % B_MOD];
+    Bp[B2 + 28] = B[B2 + (28 + B2_shift) % B_MOD];
+    Bp[B2 + 29] = B[B2 + (29 + B2_shift) % B_MOD];
+    Bp[B2 + 30] = B[B2 + (30 + B2_shift) % B_MOD];
+    Bp[B2 + 31] = B[B2 + (31 + B2_shift) % B_MOD];
+
+    // Row 3
+    Bp[B3 + 0] = B[B3 + (0 + B3_shift) % B_MOD];
+    Bp[B3 + 1] = B[B3 + (1 + B3_shift) % B_MOD];
+    Bp[B3 + 2] = B[B3 + (2 + B3_shift) % B_MOD];
+    Bp[B3 + 3] = B[B3 + (3 + B3_shift) % B_MOD];
+    Bp[B3 + 4] = B[B3 + (4 + B3_shift) % B_MOD];
+    Bp[B3 + 5] = B[B3 + (5 + B3_shift) % B_MOD];
+    Bp[B3 + 6] = B[B3 + (6 + B3_shift) % B_MOD];
+    Bp[B3 + 7] = B[B3 + (7 + B3_shift) % B_MOD];
+    Bp[B3 + 8] = B[B3 + (8 + B3_shift) % B_MOD];
+    Bp[B3 + 9] = B[B3 + (9 + B3_shift) % B_MOD];
+    Bp[B3 + 10] = B[B3 + (10 + B3_shift) % B_MOD];
+    Bp[B3 + 11] = B[B3 + (11 + B3_shift) % B_MOD];
+    Bp[B3 + 12] = B[B3 + (12 + B3_shift) % B_MOD];
+    Bp[B3 + 13] = B[B3 + (13 + B3_shift) % B_MOD];
+    Bp[B3 + 14] = B[B3 + (14 + B3_shift) % B_MOD];
+    Bp[B3 + 15] = B[B3 + (15 + B3_shift) % B_MOD];
+    Bp[B3 + 16] = B[B3 + (16 + B3_shift) % B_MOD];
+    Bp[B3 + 17] = B[B3 + (17 + B3_shift) % B_MOD];
+    Bp[B3 + 18] = B[B3 + (18 + B3_shift) % B_MOD];
+    Bp[B3 + 19] = B[B3 + (19 + B3_shift) % B_MOD];
+    Bp[B3 + 20] = B[B3 + (20 + B3_shift) % B_MOD];
+    Bp[B3 + 21] = B[B3 + (21 + B3_shift) % B_MOD];
+    Bp[B3 + 22] = B[B3 + (22 + B3_shift) % B_MOD];
+    Bp[B3 + 23] = B[B3 + (23 + B3_shift) % B_MOD];
+    Bp[B3 + 24] = B[B3 + (24 + B3_shift) % B_MOD];
+    Bp[B3 + 25] = B[B3 + (25 + B3_shift) % B_MOD];
+    Bp[B3 + 26] = B[B3 + (26 + B3_shift) % B_MOD];
+    Bp[B3 + 27] = B[B3 + (27 + B3_shift) % B_MOD];
+    Bp[B3 + 28] = B[B3 + (28 + B3_shift) % B_MOD];
+    Bp[B3 + 29] = B[B3 + (29 + B3_shift) % B_MOD];
+    Bp[B3 + 30] = B[B3 + (30 + B3_shift) % B_MOD];
+    Bp[B3 + 31] = B[B3 + (31 + B3_shift) % B_MOD];
+
+}
+
+void bs_shiftrows_rev(word_t * Bp, word_t * B)
+{
+    // Row 0
+    Bp[B0 + (0 + B0_shift) % B_MOD] = B[B0 + 0];
+    Bp[B0 + (1 + B0_shift) % B_MOD] = B[B0 + 1];
+    Bp[B0 + (2 + B0_shift) % B_MOD] = B[B0 + 2];
+    Bp[B0 + (3 + B0_shift) % B_MOD] = B[B0 + 3];
+    Bp[B0 + (4 + B0_shift) % B_MOD] = B[B0 + 4];
+    Bp[B0 + (5 + B0_shift) % B_MOD] = B[B0 + 5];
+    Bp[B0 + (6 + B0_shift) % B_MOD] = B[B0 + 6];
+    Bp[B0 + (7 + B0_shift) % B_MOD] = B[B0 + 7];
+    Bp[B0 + (8 + B0_shift) % B_MOD] = B[B0 + 8];
+    Bp[B0 + (9 + B0_shift) % B_MOD] = B[B0 + 9];
+    Bp[B0 + (10 + B0_shift) % B_MOD] = B[B0 + 10];
+    Bp[B0 + (11 + B0_shift) % B_MOD] = B[B0 + 11];
+    Bp[B0 + (12 + B0_shift) % B_MOD] = B[B0 + 12];
+    Bp[B0 + (13 + B0_shift) % B_MOD] = B[B0 + 13];
+    Bp[B0 + (14 + B0_shift) % B_MOD] = B[B0 + 14];
+    Bp[B0 + (15 + B0_shift) % B_MOD] = B[B0 + 15];
+    Bp[B0 + (16 + B0_shift) % B_MOD] = B[B0 + 16];
+    Bp[B0 + (17 + B0_shift) % B_MOD] = B[B0 + 17];
+    Bp[B0 + (18 + B0_shift) % B_MOD] = B[B0 + 18];
+    Bp[B0 + (19 + B0_shift) % B_MOD] = B[B0 + 19];
+    Bp[B0 + (20 + B0_shift) % B_MOD] = B[B0 + 20];
+    Bp[B0 + (21 + B0_shift) % B_MOD] = B[B0 + 21];
+    Bp[B0 + (22 + B0_shift) % B_MOD] = B[B0 + 22];
+    Bp[B0 + (23 + B0_shift) % B_MOD] = B[B0 + 23];
+    Bp[B0 + (24 + B0_shift) % B_MOD] = B[B0 + 24];
+    Bp[B0 + (25 + B0_shift) % B_MOD] = B[B0 + 25];
+    Bp[B0 + (26 + B0_shift) % B_MOD] = B[B0 + 26];
+    Bp[B0 + (27 + B0_shift) % B_MOD] = B[B0 + 27];
+    Bp[B0 + (28 + B0_shift) % B_MOD] = B[B0 + 28];
+    Bp[B0 + (29 + B0_shift) % B_MOD] = B[B0 + 29];
+    Bp[B0 + (30 + B0_shift) % B_MOD] = B[B0 + 30];
+    Bp[B0 + (31 + B0_shift) % B_MOD] = B[B0 + 31];
+
+    // Row 1
+    Bp[B1 + (0 + B1_shift) % B_MOD] = B[B1 + 0];
+    Bp[B1 + (1 + B1_shift) % B_MOD] = B[B1 + 1];
+    Bp[B1 + (2 + B1_shift) % B_MOD] = B[B1 + 2];
+    Bp[B1 + (3 + B1_shift) % B_MOD] = B[B1 + 3];
+    Bp[B1 + (4 + B1_shift) % B_MOD] = B[B1 + 4];
+    Bp[B1 + (5 + B1_shift) % B_MOD] = B[B1 + 5];
+    Bp[B1 + (6 + B1_shift) % B_MOD] = B[B1 + 6];
+    Bp[B1 + (7 + B1_shift) % B_MOD] = B[B1 + 7];
+    Bp[B1 + (8 + B1_shift) % B_MOD] = B[B1 + 8];
+    Bp[B1 + (9 + B1_shift) % B_MOD] = B[B1 + 9];
+    Bp[B1 + (10 + B1_shift) % B_MOD] = B[B1 + 10];
+    Bp[B1 + (11 + B1_shift) % B_MOD] = B[B1 + 11];
+    Bp[B1 + (12 + B1_shift) % B_MOD] = B[B1 + 12];
+    Bp[B1 + (13 + B1_shift) % B_MOD] = B[B1 + 13];
+    Bp[B1 + (14 + B1_shift) % B_MOD] = B[B1 + 14];
+    Bp[B1 + (15 + B1_shift) % B_MOD] = B[B1 + 15];
+    Bp[B1 + (16 + B1_shift) % B_MOD] = B[B1 + 16];
+    Bp[B1 + (17 + B1_shift) % B_MOD] = B[B1 + 17];
+    Bp[B1 + (18 + B1_shift) % B_MOD] = B[B1 + 18];
+    Bp[B1 + (19 + B1_shift) % B_MOD] = B[B1 + 19];
+    Bp[B1 + (20 + B1_shift) % B_MOD] = B[B1 + 20];
+    Bp[B1 + (21 + B1_shift) % B_MOD] = B[B1 + 21];
+    Bp[B1 + (22 + B1_shift) % B_MOD] = B[B1 + 22];
+    Bp[B1 + (23 + B1_shift) % B_MOD] = B[B1 + 23];
+    Bp[B1 + (24 + B1_shift) % B_MOD] = B[B1 + 24];
+    Bp[B1 + (25 + B1_shift) % B_MOD] = B[B1 + 25];
+    Bp[B1 + (26 + B1_shift) % B_MOD] = B[B1 + 26];
+    Bp[B1 + (27 + B1_shift) % B_MOD] = B[B1 + 27];
+    Bp[B1 + (28 + B1_shift) % B_MOD] = B[B1 + 28];
+    Bp[B1 + (29 + B1_shift) % B_MOD] = B[B1 + 29];
+    Bp[B1 + (30 + B1_shift) % B_MOD] = B[B1 + 30];
+    Bp[B1 + (31 + B1_shift) % B_MOD] = B[B1 + 31];
+    
+    // Row 2
+    Bp[B2 + (0 + B2_shift) % B_MOD] = B[B2 + 0];
+    Bp[B2 + (1 + B2_shift) % B_MOD] = B[B2 + 1];
+    Bp[B2 + (2 + B2_shift) % B_MOD] = B[B2 + 2];
+    Bp[B2 + (3 + B2_shift) % B_MOD] = B[B2 + 3];
+    Bp[B2 + (4 + B2_shift) % B_MOD] = B[B2 + 4];
+    Bp[B2 + (5 + B2_shift) % B_MOD] = B[B2 + 5];
+    Bp[B2 + (6 + B2_shift) % B_MOD] = B[B2 + 6];
+    Bp[B2 + (7 + B2_shift) % B_MOD] = B[B2 + 7];
+    Bp[B2 + (8 + B2_shift) % B_MOD] = B[B2 + 8];
+    Bp[B2 + (9 + B2_shift) % B_MOD] = B[B2 + 9];
+    Bp[B2 + (10 + B2_shift) % B_MOD] = B[B2 + 10];
+    Bp[B2 + (11 + B2_shift) % B_MOD] = B[B2 + 11];
+    Bp[B2 + (12 + B2_shift) % B_MOD] = B[B2 + 12];
+    Bp[B2 + (13 + B2_shift) % B_MOD] = B[B2 + 13];
+    Bp[B2 + (14 + B2_shift) % B_MOD] = B[B2 + 14];
+    Bp[B2 + (15 + B2_shift) % B_MOD] = B[B2 + 15];
+    Bp[B2 + (16 + B2_shift) % B_MOD] = B[B2 + 16];
+    Bp[B2 + (17 + B2_shift) % B_MOD] = B[B2 + 17];
+    Bp[B2 + (18 + B2_shift) % B_MOD] = B[B2 + 18];
+    Bp[B2 + (19 + B2_shift) % B_MOD] = B[B2 + 19];
+    Bp[B2 + (20 + B2_shift) % B_MOD] = B[B2 + 20];
+    Bp[B2 + (21 + B2_shift) % B_MOD] = B[B2 + 21];
+    Bp[B2 + (22 + B2_shift) % B_MOD] = B[B2 + 22];
+    Bp[B2 + (23 + B2_shift) % B_MOD] = B[B2 + 23];
+    Bp[B2 + (24 + B2_shift) % B_MOD] = B[B2 + 24];
+    Bp[B2 + (25 + B2_shift) % B_MOD] = B[B2 + 25];
+    Bp[B2 + (26 + B2_shift) % B_MOD] = B[B2 + 26];
+    Bp[B2 + (27 + B2_shift) % B_MOD] = B[B2 + 27];
+    Bp[B2 + (28 + B2_shift) % B_MOD] = B[B2 + 28];
+    Bp[B2 + (29 + B2_shift) % B_MOD] = B[B2 + 29];
+    Bp[B2 + (30 + B2_shift) % B_MOD] = B[B2 + 30];
+    Bp[B2 + (31 + B2_shift) % B_MOD] = B[B2 + 31];
+
+
+    // Row 3
+    Bp[B3 + (0 + B3_shift) % B_MOD] = B[B3 + 0];
+    Bp[B3 + (1 + B3_shift) % B_MOD] = B[B3 + 1];
+    Bp[B3 + (2 + B3_shift) % B_MOD] = B[B3 + 2];
+    Bp[B3 + (3 + B3_shift) % B_MOD] = B[B3 + 3];
+    Bp[B3 + (4 + B3_shift) % B_MOD] = B[B3 + 4];
+    Bp[B3 + (5 + B3_shift) % B_MOD] = B[B3 + 5];
+    Bp[B3 + (6 + B3_shift) % B_MOD] = B[B3 + 6];
+    Bp[B3 + (7 + B3_shift) % B_MOD] = B[B3 + 7];
+    Bp[B3 + (8 + B3_shift) % B_MOD] = B[B3 + 8];
+    Bp[B3 + (9 + B3_shift) % B_MOD] = B[B3 + 9];
+    Bp[B3 + (10 + B3_shift) % B_MOD] = B[B3 + 10];
+    Bp[B3 + (11 + B3_shift) % B_MOD] = B[B3 + 11];
+    Bp[B3 + (12 + B3_shift) % B_MOD] = B[B3 + 12];
+    Bp[B3 + (13 + B3_shift) % B_MOD] = B[B3 + 13];
+    Bp[B3 + (14 + B3_shift) % B_MOD] = B[B3 + 14];
+    Bp[B3 + (15 + B3_shift) % B_MOD] = B[B3 + 15];
+    Bp[B3 + (16 + B3_shift) % B_MOD] = B[B3 + 16];
+    Bp[B3 + (17 + B3_shift) % B_MOD] = B[B3 + 17];
+    Bp[B3 + (18 + B3_shift) % B_MOD] = B[B3 + 18];
+    Bp[B3 + (19 + B3_shift) % B_MOD] = B[B3 + 19];
+    Bp[B3 + (20 + B3_shift) % B_MOD] = B[B3 + 20];
+    Bp[B3 + (21 + B3_shift) % B_MOD] = B[B3 + 21];
+    Bp[B3 + (22 + B3_shift) % B_MOD] = B[B3 + 22];
+    Bp[B3 + (23 + B3_shift) % B_MOD] = B[B3 + 23];
+    Bp[B3 + (24 + B3_shift) % B_MOD] = B[B3 + 24];
+    Bp[B3 + (25 + B3_shift) % B_MOD] = B[B3 + 25];
+    Bp[B3 + (26 + B3_shift) % B_MOD] = B[B3 + 26];
+    Bp[B3 + (27 + B3_shift) % B_MOD] = B[B3 + 27];
+    Bp[B3 + (28 + B3_shift) % B_MOD] = B[B3 + 28];
+    Bp[B3 + (29 + B3_shift) % B_MOD] = B[B3 + 29];
+    Bp[B3 + (30 + B3_shift) % B_MOD] = B[B3 + 30];
+    Bp[B3 + (31 + B3_shift) % B_MOD] = B[B3 + 31];
+}
+
+
+
 #define A0  0
 #define A1  8
 #define A2  16
@@ -374,7 +668,7 @@ void bs_mixcolumns(word_t* Bp, word_t * B)
     // first.
     
     int i = 0;
-    for (; i < BLOCK_SIZE / 4; i += 8)
+    for (; i < BLOCK_SIZE / 4; i += BLOCK_SIZE / 16)
     {
     //  of = A0 ^ A1;
     //  A0 = A0 ^ (0x1b & ((signed char)of>>7));
@@ -498,7 +792,7 @@ void bs_mixcolumns_rev(word_t * Bp, word_t * B)
     // first.
  
     int i = 0;
-    for (; i < BLOCK_SIZE / 4; i += 8)
+    for (; i < BLOCK_SIZE / 4; i += BLOCK_SIZE / 16)
     {
 
     //// state[i][0] = A0*0x0e + A1*0x0b + A2*0x0d + A3*0x09
@@ -602,25 +896,6 @@ void bs_mixcolumns_rev(word_t * Bp, word_t * B)
 }
 
 
-void bs_shiftrows()
-{
-
-}
-void bs_shiftrows_rev()
-{
-
-}
-
-
-void bs_addroundkey()
-{
-
-}
-
-void bs_addroundkey_rev()
-{
-
-}
 
 
 
