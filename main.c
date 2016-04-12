@@ -15,11 +15,21 @@ void hex_dump(uint8_t * h, int len)
 void word_dump(word_t * h, int len)
 {
     while(len--)
-        printf("%" WPAD WFMT "\n",*h++);
+        if ((len+1) % 8) printf("%" WPAD WFMT "\n",*h++);
+        else printf("%d: %" WPAD WFMT "\n",128-len-1,*h++);
+
+    printf("\n");
+}
+
+void block_dump(word_t * h, int len)
+{
+    while(len-=2 >= 0)
+        printf("%" WPAD WFMT"%" WPAD WFMT  "\n",*h++,*h++);
     printf("\n");
 }
 
 extern uint8_t INPUT[WORD_SIZE/8][BLOCK_SIZE/8 + 1];
+extern uint8_t INPUTZ[WORD_SIZE/8][BLOCK_SIZE/8 + 1];
 
 void test_transpose()
 {
@@ -125,7 +135,7 @@ void bs_apply_sbox_rev(word_t * output, word_t * input)
     }
 }
 
-void test_aes()
+void test_all_steps()
 {
     word_t input[BLOCK_SIZE];
     word_t output[BLOCK_SIZE];
@@ -133,44 +143,138 @@ void test_aes()
     int i;
     for (i=0; i<11; i++)
     {
-        memset(rk[11], i, BLOCK_SIZE);
+        memset(rk[i], i, BLOCK_SIZE);
     }
+
+    memmove(input, INPUT, BLOCK_SIZE * WORD_SIZE / 8);
 
     // encrypt
 
-    int round = 0;
-    for(; round < 9; round++)
+    bs_apply_sbox(output,input);
+    bs_apply_sbox_rev(input,output);
+        
+    bs_shiftrows(output,input);
+    bs_shiftrows_rev(input,output);
+    
+    bs_mixcolumns(output,input);
+    bs_mixcolumns_rev(input,output);
+
+    bs_addroundkey(input,rk[5]);
+    bs_addroundkey(input,rk[5]);
+
+    memmove(output,input,BLOCK_SIZE*WORD_SIZE/8);
+    printf("all steps output:\n");
+    word_dump(output,BLOCK_SIZE);
+}
+
+void test_steps_nested()
+{
+    word_t input[BLOCK_SIZE];
+    word_t output[BLOCK_SIZE];
+    word_t rk[11][BLOCK_SIZE];
+    int i;
+    for (i=0; i<11; i++)
+    {
+        memset(rk[i], i*19, BLOCK_SIZE);
+    }
+
+    memmove(input, INPUT, BLOCK_SIZE * WORD_SIZE / 8);
+
+    // nest
+    bs_addroundkey(input,rk[0]);
+    bs_apply_sbox(output,input);
+    bs_shiftrows(input,output);
+    bs_mixcolumns(output,input);
+    bs_addroundkey(output,rk[5]);
+
+
+    // un nest
+    bs_addroundkey(output,rk[5]);
+    bs_mixcolumns_rev(input,output);
+    bs_shiftrows_rev(output,input);
+    bs_apply_sbox_rev(input,output);
+    bs_addroundkey(input,rk[0]);
+
+
+    memmove(output,input,BLOCK_SIZE*WORD_SIZE/8);
+    printf("all steps nested output:\n");
+    word_dump(output,BLOCK_SIZE);
+}
+
+
+void test_aes()
+{
+    word_t input[BLOCK_SIZE];
+    word_t output[BLOCK_SIZE];
+    word_t trans[BLOCK_SIZE];
+    word_t rk[11][BLOCK_SIZE];
+    int i;
+    for (i=1; i<11; i++)
+    {
+        memset(rk[i], i * 0x124, BLOCK_SIZE);
+    }
+    memset(rk[0], 0x55, BLOCK_SIZE);
+
+    memmove(input, INPUT, BLOCK_SIZE * WORD_SIZE / 8);
+    //bs_transpose(input, (word_t*)INPUT);
+    memset(output,0, BLOCK_SIZE * WORD_SIZE / 8);
+   
+    printf("AES input:\n");
+    word_dump(input,BLOCK_SIZE);
+    memset(trans,0,sizeof(trans));
+
+    // Encrypt
+    // add key
+    bs_addroundkey(input,rk[0]);
+
+    int round = 1;
+    for(; round < 10; round++)
     {
         bs_apply_sbox(output,input);
         bs_shiftrows(input,output);
+        //memmove(output,input,BLOCK_SIZE * WORD_SIZE/8);
         bs_mixcolumns(output,input);
         bs_addroundkey(output,rk[i]);
-        memmove(input,output,BLOCK_SIZE * WORD_SIZE);
+        memmove(input,output,BLOCK_SIZE * WORD_SIZE/8);
     }
     bs_apply_sbox(input,output);
     bs_shiftrows(output,input);
-    bs_addroundkey(output,rk[9]);
+    //memmove(input,output,BLOCK_SIZE * WORD_SIZE/8);
+    bs_addroundkey(output,rk[10]);
+    
+    printf("AES output:\n");
+    word_dump(output,BLOCK_SIZE);
+    /*printf("transpose:\n");*/
+    /*bs_transpose_rev(trans, output);*/
+    /*block_dump(trans,BLOCK_SIZE);*/
 
-    // decrypt
+    memset(trans,0,sizeof(trans));
 
-    bs_addroundkey(output,rk[9]);
-    round = 8;
-    for(; round > 0; round--)
+    // Decrypt
+
+    bs_addroundkey(output,rk[10]);
+    round = 9;
+    for(; round >= 1; round--)
     {
         bs_shiftrows_rev(input,output);
+        //memmove(output,input,BLOCK_SIZE * WORD_SIZE/8);
         bs_apply_sbox_rev(output,input);
         bs_addroundkey(output,rk[i]);
-        bs_mixcolumns(input,output);
-        memmove(output,input,BLOCK_SIZE * WORD_SIZE);
+        bs_mixcolumns_rev(input,output);
+        memmove(output,input,BLOCK_SIZE * WORD_SIZE/8);
     }
     
     bs_shiftrows_rev(input,output);
+    //memmove(output,input,BLOCK_SIZE * WORD_SIZE/8);
     bs_apply_sbox_rev(output,input);
     bs_addroundkey(output,rk[0]);
 
-    printf("AES output:\n");
+    printf("AES reverse:\n");
     word_dump(output,BLOCK_SIZE);
 
+    /*printf("transpose:\n");*/
+    /*bs_transpose_rev(trans, output);*/
+    /*block_dump(trans,BLOCK_SIZE);*/
 }
 
 
@@ -181,9 +285,46 @@ int main()
     test_sbox();
     test_mixcolumns();
     test_shiftrows();
+    test_aes();
 #endif
 
-    test_aes();
+#if 0
+    word_t input[BLOCK_SIZE];
+    word_t output[BLOCK_SIZE];
+
+    memset(output,0, BLOCK_SIZE * WORD_SIZE / 8);
+    memset(input,0, BLOCK_SIZE * WORD_SIZE / 8);
+    printf("Input: \n");
+    hex_dump((uint8_t*)INPUTZ,16);
+   
+    bs_transpose(input, (word_t*)INPUTZ);
+
+    /*printf("Transpose:\n");*/
+    /*word_dump(input,BLOCK_SIZE);*/
+
+    bs_shiftrows(output,input);
+    
+    /*printf("shift rows raw:\n");*/
+    /*word_dump(output,BLOCK_SIZE);*/
+
+    memset(input,0, BLOCK_SIZE * WORD_SIZE / 8);
+    bs_transpose_rev(input, output);
+
+    printf("shift rows :\n");
+    hex_dump((uint8_t*)input,16);
+    
+    memset(input,0, BLOCK_SIZE * WORD_SIZE / 8);
+    bs_shiftrows_rev(input,output);
+    memset(output,0, BLOCK_SIZE * WORD_SIZE / 8);
+    bs_transpose_rev(output, input);
+    
+    printf("shift rows reverse:\n");
+    hex_dump((uint8_t*)output,16);
+#else
+    test_steps_nested();
+#endif
+
+
 
     return 0;
 }
