@@ -1,9 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "bs.h"
 
 
 #define bs_dump(x) word_dump(x, BLOCK_SIZE)
+
+word_t RINPUT[BLOCK_SIZE];
+word_t RINPUT_RES[BLOCK_SIZE];
 
 void hex_dump(uint8_t * h, int len)
 {
@@ -117,6 +121,31 @@ void bs_addroundkey(word_t * B, word_t * rk)
         B[i] ^= rk[i];
 }
 
+void test_addroundkey()
+{
+    word_t input[BLOCK_SIZE];
+    word_t output[BLOCK_SIZE];
+    word_t rk[11][BLOCK_SIZE];
+    int i;
+    for (i=0; i<11; i++)
+    {
+        memset(rk[i], (i+1)*253, BLOCK_SIZE);
+    }
+    memmove(input, INPUT, BLOCK_SIZE * WORD_SIZE / 8);
+
+    memmove(output, input, BLOCK_SIZE * WORD_SIZE / 8);
+
+    for (i=0; i < 10; i++)
+        bs_addroundkey(output, rk[i]);
+
+    for (i=9; i >= 0; i--)
+        bs_addroundkey(output, rk[i]);
+    
+    printf("test round key output:\n");
+    block_dump(output,WORD_SIZE);
+
+}
+
 void bs_apply_sbox(word_t * output, word_t * input)
 {
     int i;
@@ -146,7 +175,7 @@ void test_all_steps()
         memset(rk[i], i, BLOCK_SIZE);
     }
 
-    memmove(input, INPUT, BLOCK_SIZE * WORD_SIZE / 8);
+    memmove(input, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
 
     // encrypt
 
@@ -165,6 +194,17 @@ void test_all_steps()
     memmove(output,input,BLOCK_SIZE*WORD_SIZE/8);
     printf("all steps output:\n");
     word_dump(output,BLOCK_SIZE);
+    memmove(RINPUT_RES,output,BLOCK_SIZE* WORD_SIZE/8);
+
+    if (memcmp(RINPUT,RINPUT_RES,sizeof(RINPUT)) == 0)
+    {
+        printf("mem is the same\n");
+    }
+    else
+    {
+        printf("mem is not the same\n");
+    }
+
 }
 
 void test_steps_nested()
@@ -175,30 +215,57 @@ void test_steps_nested()
     int i;
     for (i=0; i<11; i++)
     {
-        memset(rk[i], i*19, BLOCK_SIZE);
+        memset(rk[i], i * 19, BLOCK_SIZE);
     }
 
     memmove(input, INPUT, BLOCK_SIZE * WORD_SIZE / 8);
 
-    // nest
+    // add round key
     bs_addroundkey(input,rk[0]);
-    bs_apply_sbox(output,input);
-    bs_shiftrows(input,output);
-    bs_mixcolumns(output,input);
-    bs_addroundkey(output,rk[5]);
+    
+
+    // do rounds
+    int rounds = 1;
+
+    for (; rounds < 10; rounds++)
+    {
+        bs_apply_sbox(output,input);
+        /*memmove(input,output,BLOCK_SIZE * WORD_SIZE / 8);*/
+        /*memmove(output,input,BLOCK_SIZE * WORD_SIZE / 8);*/
+        /*bs_shiftrows(input,output);*/
+        /*bs_mixcolumns(output,input);*/
+        /*memmove(output,input,BLOCK_SIZE * WORD_SIZE / 8);*/
+        bs_addroundkey(output,rk[5]);
+        memmove(input,output,BLOCK_SIZE * WORD_SIZE / 8);
+
+        /*bs_apply_sbox(output,input);*/
+        /*bs_shiftrows(input,output);*/
+        /*bs_mixcolumns(output,input);*/
+        /*bs_addroundkey(output,rk[5]);*/
+        /*memmove(input,output,BLOCK_SIZE * WORD_SIZE / 8);*/
+    }
 
 
-    // un nest
-    bs_addroundkey(output,rk[5]);
-    bs_mixcolumns_rev(input,output);
-    bs_shiftrows_rev(output,input);
-    bs_apply_sbox_rev(input,output);
+    // undo rounds
+    for (rounds = 1; rounds < 10; rounds++)
+    {
+        /*bs_addroundkey(output,rk[5]);*/
+
+        bs_addroundkey(output,rk[5]);
+        /*bs_mixcolumns_rev(input,output);*/
+        memmove(input,output,BLOCK_SIZE * WORD_SIZE / 8);
+        /*bs_shiftrows_rev(output,input);*/
+        /*memmove(input,output,BLOCK_SIZE * WORD_SIZE / 8);*/
+        memmove(output,input,BLOCK_SIZE * WORD_SIZE / 8);
+        bs_apply_sbox_rev(input,output);
+        memmove(output,input,BLOCK_SIZE * WORD_SIZE / 8);
+
+    }
+
     bs_addroundkey(input,rk[0]);
-
-
     memmove(output,input,BLOCK_SIZE*WORD_SIZE/8);
     printf("all steps nested output:\n");
-    word_dump(output,BLOCK_SIZE);
+    block_dump(output,64);
 }
 
 
@@ -278,8 +345,25 @@ void test_aes()
 }
 
 
-int main()
+int main(int argc, char * argv[])
 {
+    if (argc < 2)
+    {
+        fprintf(stderr,"usage: %s <input-file>\n", argv[0]);
+        exit(1);
+    }
+    FILE * r = fopen(argv[1], "r");
+    if (r == NULL)
+    {
+        perror("fopen");
+        exit(2);
+    }
+    int n = read(fileno(r), RINPUT, sizeof(RINPUT));
+    if (n != sizeof(RINPUT))
+    {
+        fprintf(stderr,"file does not have enough bytes\n");
+        exit(2);
+    }
 #if 0
     test_transpose();
     test_sbox();
@@ -295,14 +379,16 @@ int main()
     memset(output,0, BLOCK_SIZE * WORD_SIZE / 8);
     memset(input,0, BLOCK_SIZE * WORD_SIZE / 8);
     printf("Input: \n");
-    hex_dump((uint8_t*)INPUTZ,16);
+    uint8_t inputz[16] = "\xb5\x5a\xa6\xaa\xa7\x91\x20\x04\x92\xc0\xe9\x20\xa2\x69\x8b\x95";
+    /*uint8_t inputz[16] = "\x05\x0a\x06\x0a\x07\x01\x00\x04\x02\x00\x09\x00\x02\x09\x0b\x05";*/
+    hex_dump((uint8_t*)inputz,16);
    
-    bs_transpose(input, (word_t*)INPUTZ);
+    bs_transpose(input, (word_t*)inputz);
 
     /*printf("Transpose:\n");*/
     /*word_dump(input,BLOCK_SIZE);*/
 
-    bs_shiftrows(output,input);
+    bs_mixcolumns(output,input);
     
     /*printf("shift rows raw:\n");*/
     /*word_dump(output,BLOCK_SIZE);*/
@@ -310,18 +396,21 @@ int main()
     memset(input,0, BLOCK_SIZE * WORD_SIZE / 8);
     bs_transpose_rev(input, output);
 
-    printf("shift rows :\n");
+    printf("mixcolumns:\n");
     hex_dump((uint8_t*)input,16);
     
     memset(input,0, BLOCK_SIZE * WORD_SIZE / 8);
-    bs_shiftrows_rev(input,output);
+    bs_mixcolumns_rev(input,output);
     memset(output,0, BLOCK_SIZE * WORD_SIZE / 8);
     bs_transpose_rev(output, input);
     
-    printf("shift rows reverse:\n");
+    printf("mixcolumns reverse:\n");
     hex_dump((uint8_t*)output,16);
 #else
-    test_steps_nested();
+    /*test_steps_nested();*/
+    test_all_steps();
+
+    /*test_addroundkey();*/
 #endif
 
 
