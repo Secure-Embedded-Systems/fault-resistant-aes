@@ -41,8 +41,10 @@ void test_transpose()
     word_t blocks_tmp[ BLOCK_SIZE ];
     memset(blocks,0, sizeof(blocks));
     memset(blocks_tmp,0, sizeof(blocks));
-    bs_transpose(blocks,(word_t*)INPUT);
-    bs_transpose_rev(blocks_tmp,blocks);
+    memmove(blocks,INPUT,sizeof(blocks));
+    bs_transpose(blocks);
+
+    bs_transpose_rev(blocks);
     
     printf("TRANSPOSE original:\n");
     bs_dump((word_t*)INPUT);
@@ -64,15 +66,15 @@ void test_sbox()
     printf("SBOX input:\n");
     word_dump(sbox_in,8);
 
-    bs_sbox(sbox_out, sbox_in);
+    bs_sbox(sbox_in);
     
     printf("SBOX output:\n");
-    word_dump(sbox_out,8);
+    word_dump(sbox_in,8);
 
-    bs_sbox_rev(sbox_rev, sbox_out);
+    bs_sbox_rev(sbox_in);
 
     printf("SBOX reverse:\n");
-    word_dump(sbox_rev,8);
+    word_dump(sbox_in,8);
 }
 void test_mixcolumns()
 {
@@ -84,13 +86,13 @@ void test_mixcolumns()
     printf("MIXCOLUMNS input:\n");
     word_dump(mixcolumn,BLOCK_SIZE);
 
-    bs_mixcolumns(mixcolumn_out,mixcolumn);
+    bs_mixcolumns(mixcolumn);
 
     printf("MIXCOLUMNS output:\n");
     word_dump(mixcolumn_out,BLOCK_SIZE);
     
     memset(mixcolumn,0,sizeof(mixcolumn));
-    bs_mixcolumns_rev(mixcolumn,mixcolumn_out);
+    bs_mixcolumns_rev(mixcolumn);
     printf("MIXCOLUMNS reverse:\n");
     word_dump(mixcolumn,BLOCK_SIZE);
 }
@@ -103,12 +105,12 @@ void test_shiftrows()
     printf("SHIFTROWS input:\n");
     word_dump(shiftrow,BLOCK_SIZE);
     
-    bs_shiftrows(shiftrow_out,shiftrow);
+    bs_shiftrows(shiftrow);
     printf("SHIFTROWS output:\n");
-    word_dump(shiftrow_out,BLOCK_SIZE);
+    word_dump(shiftrow,BLOCK_SIZE);
     
     memset(shiftrow,0,sizeof(shiftrow));
-    bs_shiftrows_rev(shiftrow,shiftrow_out);
+    bs_shiftrows_rev(shiftrow);
    
     printf("SHIFTROWS reverse:\n");
     word_dump(shiftrow,BLOCK_SIZE);
@@ -146,21 +148,21 @@ void test_addroundkey()
 
 }
 
-void bs_apply_sbox(word_t * output, word_t * input)
+void bs_apply_sbox(word_t * input)
 {
     int i;
     for(i=0; i < BLOCK_SIZE; i+=8)
     {
-        bs_sbox(output+i, input+i);
+        bs_sbox(input+i);
     }
 }
 
-void bs_apply_sbox_rev(word_t * output, word_t * input)
+void bs_apply_sbox_rev(word_t * input)
 {
     int i;
     for(i=0; i < BLOCK_SIZE; i+=8)
     {
-        bs_sbox_rev(output+i, input+i);
+        bs_sbox_rev(input+i);
     }
 }
 
@@ -196,54 +198,54 @@ void test_all_steps()
     memset(trans,0, BLOCK_SIZE * WORD_SIZE / 8);
 
 
-    bs_transpose(input,input);
-    bs_mixcolumns(input,input);
-    bs_transpose_rev(input,input);
+    bs_transpose(input);
+    bs_mixcolumns(input);
+    bs_transpose_rev(input);
     MixColumns((state_t *)input2);
     check_mem(input,input2);
 
 
-    bs_transpose(input,input);
-    bs_shiftrows(input,input);
-    bs_transpose_rev(input,input);
+    bs_transpose(input);
+    bs_shiftrows(input);
+    bs_transpose_rev(input);
     ShiftRows((state_t *)input2);
     check_mem(input,input2);
 
-    bs_transpose(input,input);
-    bs_mixcolumns(input,input);
-    bs_transpose_rev(input,input);
+    bs_transpose(input);
+    bs_mixcolumns(input);
+    bs_transpose_rev(input);
     MixColumns((state_t *)input2);
     check_mem(input,input2);
 
 
-    bs_transpose(input,input);
-    bs_shiftrows(input,input);
-    bs_transpose_rev(input,input);
+    bs_transpose(input);
+    bs_shiftrows(input);
+    bs_transpose_rev(input);
     ShiftRows((state_t *)input2);
     check_mem(input,input2);
 
 
-    bs_transpose(input,input);
-    bs_shiftrows_rev(input,input);
-    bs_transpose_rev(input,input);
+    bs_transpose(input);
+    bs_shiftrows_rev(input);
+    bs_transpose_rev(input);
     InvShiftRows((state_t *)input2);
     check_mem(input,input2);
 
-    bs_transpose(input,input);
-    bs_mixcolumns_rev(input,input);
-    bs_transpose_rev(input,input);
+    bs_transpose(input);
+    bs_mixcolumns_rev(input);
+    bs_transpose_rev(input);
     InvMixColumns((state_t *)input2);
     check_mem(input,input2);
 
-    bs_transpose(input,input);
-    bs_shiftrows_rev(input,input);
-    bs_transpose_rev(input,input);
+    bs_transpose(input);
+    bs_shiftrows_rev(input);
+    bs_transpose_rev(input);
     InvShiftRows((state_t *)input2);
     check_mem(input,input2);
 
-    bs_transpose(input,input);
-    bs_mixcolumns_rev(input,input);
-    bs_transpose_rev(input,input);
+    bs_transpose(input);
+    bs_mixcolumns_rev(input);
+    bs_transpose_rev(input);
     InvMixColumns((state_t *)input2);
     check_mem(input,input2);
 
@@ -253,27 +255,27 @@ void test_all_steps()
     for (wow = 0; wow < 10; wow++)
     {
         bs_addroundkey(input, rk[3]);
-        bs_shiftrows(input,input);
-        bs_mixcolumns(input,input);
-        bs_shiftrows(input,input);
+        bs_shiftrows(input);
+        bs_mixcolumns(input);
+        bs_shiftrows(input);
         bs_addroundkey(input, rk[3]);
-        bs_apply_sbox(input,input);
-        bs_shiftrows(input,input);
+        bs_apply_sbox(input);
+        bs_shiftrows(input);
     }
 
     for (wow = 0; wow < 10; wow++)
     {
-        bs_shiftrows_rev(input,input);
-        bs_apply_sbox_rev(input,input);
+        bs_shiftrows_rev(input);
+        bs_apply_sbox_rev(input);
         bs_addroundkey(input, rk[3]);
-        bs_shiftrows_rev(input,input);
-        bs_mixcolumns_rev(input,input);
-        bs_shiftrows_rev(input,input);
+        bs_shiftrows_rev(input);
+        bs_mixcolumns_rev(input);
+        bs_shiftrows_rev(input);
         bs_addroundkey(input, rk[3]);
     }
     /*bs_apply_sbox_rev(input,input);*/
     /*ShiftRows((state_t *)input2);*/
-    /*bs_mixcolumns_rev(input,input);*/
+    /*bs_mixcolumns_rev(input);*/
     /*block_dump(input, WORD_SIZE);*/
 
 
@@ -308,7 +310,7 @@ void test_aes()
     memmove(input, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
     memmove(input2, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
     
-    bs_transpose(input,input);
+    bs_transpose(input);
 
     // add round key
     bs_addroundkey(input,rk[0]);
@@ -318,14 +320,14 @@ void test_aes()
 
     for (; rounds < 10; rounds++)
     {
-        bs_apply_sbox(input,input);
-        bs_shiftrows(input,input);
-        bs_mixcolumns(input,input);
+        bs_apply_sbox(input);
+        bs_shiftrows(input);
+        bs_mixcolumns(input);
         bs_addroundkey(input,rk[i]);
     }
 
-    bs_apply_sbox(input,input);
-    bs_shiftrows(input,input);
+    bs_apply_sbox(input);
+    bs_shiftrows(input);
     bs_addroundkey(input,rk[10]);
 
     // decrypt
@@ -334,17 +336,17 @@ void test_aes()
     // undo rounds
     for (rounds = 9; rounds > 0; rounds--)
     {
-        bs_shiftrows_rev(input,input);
-        bs_apply_sbox_rev(input,input);
+        bs_shiftrows_rev(input);
+        bs_apply_sbox_rev(input);
         bs_addroundkey(input,rk[i]);
-        bs_mixcolumns_rev(input,input);
+        bs_mixcolumns_rev(input);
     }
-    bs_shiftrows_rev(input,input);
-    bs_apply_sbox_rev(input,input);
+    bs_shiftrows_rev(input);
+    bs_apply_sbox_rev(input);
 
     bs_addroundkey(input,rk[0]);
 
-    bs_transpose_rev(input,input);
+    bs_transpose_rev(input);
 
     if (memcmp(input,input2,BLOCK_SIZE*WORD_SIZE/8) == 0)
     {
@@ -372,7 +374,7 @@ void test_steps_nested()
     memmove(input, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
     memmove(input2, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
 
-    bs_transpose(input,input);
+    bs_transpose(input);
 
     // add round key
     bs_addroundkey(input,rk[0]);
@@ -382,14 +384,14 @@ void test_steps_nested()
 
     for (; rounds < 10; rounds++)
     {
-        bs_apply_sbox(input,input);
-        bs_shiftrows(input,input);
-        bs_mixcolumns(input,input);
+        bs_apply_sbox(input);
+        bs_shiftrows(input);
+        bs_mixcolumns(input);
         bs_addroundkey(input,rk[i]);
     }
 
-    bs_apply_sbox(input,input);
-    bs_shiftrows(input,input);
+    bs_apply_sbox(input);
+    bs_shiftrows(input);
     bs_addroundkey(input,rk[10]);
 
     // decrypt
@@ -398,13 +400,13 @@ void test_steps_nested()
     // undo rounds
     for (rounds = 9; rounds > 0; rounds--)
     {
-        bs_shiftrows_rev(input,input);
-        bs_apply_sbox_rev(input,input);
+        bs_shiftrows_rev(input);
+        bs_apply_sbox_rev(input);
         bs_addroundkey(input,rk[i]);
-        bs_mixcolumns_rev(input,input);
+        bs_mixcolumns_rev(input);
     }
-    bs_shiftrows_rev(input,input);
-    bs_apply_sbox_rev(input,input);
+    bs_shiftrows_rev(input);
+    bs_apply_sbox_rev(input);
 
     bs_addroundkey(input,rk[0]);
 
@@ -468,7 +470,7 @@ int main(int argc, char * argv[])
     hex_dump((uint8_t*)input,16);
     
     memset(input,0, BLOCK_SIZE * WORD_SIZE / 8);
-    bs_mixcolumns_rev(input,output);
+    bs_mixcolumns_rev(output);
     memset(output,0, BLOCK_SIZE * WORD_SIZE / 8);
     bs_transpose_rev(output, input);
     

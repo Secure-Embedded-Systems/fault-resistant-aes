@@ -32,17 +32,17 @@
 #error "invalid word size"
 #endif
 
-void bs_transpose(word_t * transpose, word_t * blocks);
-void bs_transpose_rev(word_t * transpose, word_t * blocks);
+void bs_transpose(word_t * blocks);
+void bs_transpose_rev(word_t * blocks);
 
-void bs_sbox(word_t S[8], word_t U[8]);
-void bs_sbox_rev(word_t W[8], word_t U[8]);
+void bs_sbox(word_t U[8]);
+void bs_sbox_rev(word_t U[8]);
 
-void bs_shiftrows(word_t * Bp, word_t * B);
-void bs_shiftrows_rev(word_t * Bp, word_t * B);
+void bs_shiftrows(word_t * B);
+void bs_shiftrows_rev(word_t * B);
 
-void bs_mixcolumns(word_t * Bp, word_t * B);
-void bs_mixcolumns_rev();
+void bs_mixcolumns(word_t * B);
+void bs_mixcolumns_rev(word_t * B);
 
 // testing
 
