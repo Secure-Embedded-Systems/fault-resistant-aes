@@ -2,6 +2,33 @@
 #include <string.h>
 #include "bs.h"
 
+
+
+void bs_addroundkey(word_t * B, word_t * rk)
+{
+    int i;
+    for (i = 0; i < BLOCK_SIZE; i++)
+        B[i] ^= rk[i];
+}
+
+void bs_apply_sbox(word_t * input)
+{
+    int i;
+    for(i=0; i < BLOCK_SIZE; i+=8)
+    {
+        bs_sbox(input+i);
+    }
+}
+
+void bs_apply_sbox_rev(word_t * input)
+{
+    int i;
+    for(i=0; i < BLOCK_SIZE; i+=8)
+    {
+        bs_sbox_rev(input+i);
+    }
+}
+
 /*July 2011*/
 /*Straight-line program for AES s box*/
 
@@ -329,8 +356,6 @@ void bs_sbox(word_t U[8])
     memmove(U,S,sizeof(S));
 }
 
-// transpose a block
-// TODO do it in place
 void bs_transpose(word_t * blocks)
 {
     int i,j,k;

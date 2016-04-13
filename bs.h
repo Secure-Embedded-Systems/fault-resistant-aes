@@ -44,13 +44,10 @@ void bs_shiftrows_rev(word_t * B);
 void bs_mixcolumns(word_t * B);
 void bs_mixcolumns_rev(word_t * B);
 
-// testing
+void bs_addroundkey(word_t * B, word_t * rk);
+void bs_apply_sbox(word_t * input);
+void bs_apply_sbox_rev(word_t * input);
 
-typedef uint8_t state_t[4][4];
-void MixColumns(state_t * state);
-void InvMixColumns(state_t * state);
 
-void ShiftRows(state_t * state);
-void InvShiftRows(state_t * state);
 
 #endif
