@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include "bs.h"
 
 /*July 2011*/
@@ -7,8 +8,9 @@
 /*Input is U[0], U[1],...,U[7]*/
 /*Output is S[0], S[1],...,S[7]*/
 // http://cs-www.cs.yale.edu/homes/peralta/CircuitStuff/CMT.html
-void bs_sbox_rev(word_t W[8], word_t U[8])
+void bs_sbox_rev(word_t _W[8], word_t U[8])
 {
+    word_t W[8];
     word_t
         T1,T2,T3,T4,T5,T6,T8,
         T9,T10,T13,T14,T15,T16,
@@ -165,12 +167,12 @@ void bs_sbox_rev(word_t W[8], word_t U[8])
     W[6] = P14 ^ P23;
     W[7] = P9 ^ P16;
 
-
+    memmove(_W,W,sizeof(W));
 }
 
-void bs_sbox(word_t S[8], word_t U[8])
+void bs_sbox(word_t _S[8], word_t U[8])
 {
-
+    word_t S[8];
     word_t
         T1,T2,T3,T4,T5,T6,T7,T8,
         T9,T10,T11,T12,T13,T14,T15,T16,
@@ -323,13 +325,17 @@ void bs_sbox(word_t S[8], word_t U[8])
     S[5] = L25 ^ L29;
     S[6] = ~(L13 ^ L27);
     S[7] = ~(L6 ^ L23);
+    
+    memmove(_S,S,sizeof(S));
 }
 
 // transpose a block
 // TODO do it in place
-void bs_transpose(word_t * transpose, word_t * blocks)
+void bs_transpose(word_t * _transpose, word_t * blocks)
 {
     int i,j,k;
+    word_t transpose[BLOCK_SIZE];
+    memset(transpose, 0, sizeof(transpose));
     word_t w;
     for(k=0; k < WORD_SIZE; k++)
     {
@@ -343,12 +349,15 @@ void bs_transpose(word_t * transpose, word_t * blocks)
             }
         }
     }
+    memmove(_transpose,transpose,sizeof(transpose));
 }
 
-void bs_transpose_rev(word_t * transpose, word_t * blocks)
+void bs_transpose_rev(word_t * _transpose, word_t * blocks)
 {
     int i,j,k;
     word_t w;
+    word_t transpose[BLOCK_SIZE];
+    memset(transpose, 0, sizeof(transpose));
     for(k=0; k < BLOCK_SIZE; k++)
     {
         w = blocks[k];
@@ -358,6 +367,7 @@ void bs_transpose_rev(word_t * transpose, word_t * blocks)
             transpose[j * 2 + (k >= WORD_SIZE)] |= bit;
         }
     }
+    memmove(_transpose,transpose,sizeof(transpose));
 }
 
 
@@ -378,8 +388,9 @@ void bs_transpose_rev(word_t * transpose, word_t * blocks)
 #define B_MOD           (BLOCK_SIZE)
 
 
-void bs_shiftrows(word_t * Bp, word_t * B)
+void bs_shiftrows(word_t * _Bp, word_t * B)
 {
+    word_t Bp[BLOCK_SIZE];
     // Row 0
     Bp[R0 + B0 + 0] = B[R0 + B0 + 0];
     Bp[R0 + B0 + 1] = B[R0 + B0 + 1];
@@ -518,10 +529,13 @@ void bs_shiftrows(word_t * Bp, word_t * B)
     Bp[R3 + B3 + 5] = B[R3 + B2 + 5];
     Bp[R3 + B3 + 6] = B[R3 + B2 + 6];
     Bp[R3 + B3 + 7] = B[R3 + B2 + 7];
+
+    memmove(_Bp,Bp,sizeof(Bp));
 }
 
-void bs_shiftrows_rev(word_t * Bp, word_t * B)
+void bs_shiftrows_rev(word_t * _Bp, word_t * B)
 {
+    word_t Bp[BLOCK_SIZE];
     // Row 0
     Bp[R0 + B0 + 0] = B[R0 + B0 + 0];
     Bp[R0 + B0 + 1] = B[R0 + B0 + 1];
@@ -587,7 +601,7 @@ void bs_shiftrows_rev(word_t * Bp, word_t * B)
     Bp[R1 + B0 + 2] = B[R1 + B3 + 2];
     Bp[R1 + B0 + 3] = B[R1 + B3 + 3];
     Bp[R1 + B0 + 4] = B[R1 + B3 + 4];
-    Bp[R1 + B3 + 5] = B[R1 + B0 + 5];
+    Bp[R1 + B0 + 5] = B[R1 + B3 + 5];
     Bp[R1 + B0 + 6] = B[R1 + B3 + 6];
     Bp[R1 + B0 + 7] = B[R1 + B3 + 7];
 
@@ -661,6 +675,7 @@ void bs_shiftrows_rev(word_t * Bp, word_t * B)
     Bp[R3 + B2 + 6] = B[R3 + B3 + 6];
     Bp[R3 + B2 + 7] = B[R3 + B3 + 7];
 
+    memmove(_Bp,Bp,sizeof(Bp));
 }
 
 
@@ -684,8 +699,10 @@ static uint8_t transbyte(word_t * B)
 #define A3  24
 
 
-void bs_mixcolumns(word_t* Bp, word_t * B)
+void bs_mixcolumns(word_t* _Bp, word_t * B)
 {
+    word_t Bp_space[BLOCK_SIZE];
+    word_t * Bp = Bp_space;
     // to understand this, you MUST understand
     // https://en.wikipedia.org/wiki/Rijndael_mix_columns
     // first.
@@ -815,13 +832,17 @@ void bs_mixcolumns(word_t* Bp, word_t * B)
     }
 
 
+    memmove(_Bp,Bp - BLOCK_SIZE,sizeof(Bp_space));
 }
 
-void bs_mixcolumns_rev(word_t * Bp, word_t * B)
+void bs_mixcolumns_rev(word_t * _Bp, word_t * B)
 {
     // to understand this, you MUST understand
     // https://en.wikipedia.org/wiki/Rijndael_mix_columns
     // first.
+    word_t Bp_space[BLOCK_SIZE];
+    word_t * Bp = Bp_space;
+
  
     int i = 0;
     for (; i < BLOCK_SIZE / 4; i += BLOCK_SIZE / 16)
@@ -924,6 +945,7 @@ void bs_mixcolumns_rev(word_t * Bp, word_t * B)
     B  += BLOCK_SIZE/4;
     }
 
+    memmove(_Bp,Bp - BLOCK_SIZE,sizeof(Bp_space));
 
 }
 

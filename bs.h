@@ -44,4 +44,13 @@ void bs_shiftrows_rev(word_t * Bp, word_t * B);
 void bs_mixcolumns(word_t * Bp, word_t * B);
 void bs_mixcolumns_rev();
 
+// testing
+
+typedef uint8_t state_t[4][4];
+void MixColumns(state_t * state);
+void InvMixColumns(state_t * state);
+
+void ShiftRows(state_t * state);
+void InvShiftRows(state_t * state);
+
 #endif
