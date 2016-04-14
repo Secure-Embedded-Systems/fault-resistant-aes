@@ -4,9 +4,10 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#define BLOCK_SIZE      128
-#define WORD_SIZE       64
-#define WORDS_PER_BLOCK  (BLOCK_SIZE / WORD_SIZE)
+#define BLOCK_SIZE          128
+#define KEY_SCHEDULE_SIZE   176
+#define WORD_SIZE           64
+#define WORDS_PER_BLOCK     (BLOCK_SIZE / WORD_SIZE)
 
 #if (WORD_SIZE==64)
     typedef uint64_t    word_t;
@@ -49,5 +50,6 @@ void bs_apply_sbox(word_t * input);
 void bs_apply_sbox_rev(word_t * input);
 
 
+void expand_key(unsigned char *in);
 
 #endif
