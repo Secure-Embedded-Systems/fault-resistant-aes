@@ -28,7 +28,7 @@ void dump_block(word_t * h, int len)
     printf("\n");
 }
 
-void aes_ecb_encrypt(word_t * input, word_t ** rk)
+void aes_ecb_encrypt(word_t * input, word_t (* rk)[BLOCK_SIZE])
 {
     int round;
 
@@ -50,7 +50,7 @@ void aes_ecb_encrypt(word_t * input, word_t ** rk)
     bs_transpose_rev(input);
 }
 
-void aes_ecb_decrypt(word_t * input, word_t ** rk)
+void aes_ecb_decrypt(word_t * input, word_t (* rk)[BLOCK_SIZE])
 {
     int round;
 
@@ -103,28 +103,27 @@ int main(int argc, char * argv[])
         fprintf(stderr,"usage: %s <input-file>\n", argv[0]);
         exit(1);
     }
-    uint8_t key[16] = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-    uint8_t key2[16] = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f";
+    uint8_t key_vector[16] = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
+    uint8_t pt_vector[16] =  "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a";
 
+    word_t input[BLOCK_SIZE];
     word_t rk[11][BLOCK_SIZE];
     uint8_t key_s[KEY_SCHEDULE_SIZE];
     memset(key_s, 0, sizeof(key_s));
-    memmove(key_s, key2, sizeof(key));
+    memset(input, 0, sizeof(input));
+    memmove(key_s, key_vector, sizeof(key_vector));
+    memmove(input, pt_vector, sizeof(pt_vector));
 
     bs_expand_key(rk, key_s);
+    aes_ecb_encrypt(input,rk);
 
+    printf("cipher text: \n");
+    dump_hex((uint8_t * )input,16);
 
+    aes_ecb_decrypt(input,rk);
 
-    int i,j;
-    for (i=0; i < 11; i++)
-    {
-        bs_transpose_rev(rk[i]);
-
-        for (j=0; j < 11; j++)
-        {
-            dump_hex((uint8_t *)rk[i] + j * 16, 16);
-        }
-    }
+    printf("plain text: \n");
+    dump_hex((uint8_t * )input,16);
 
     return 0;
 }
