@@ -30,6 +30,8 @@ void dump_block(word_t * h, int len)
 
 void aes_ecb_encrypt(word_t * input, word_t (* rk)[BLOCK_SIZE])
 {
+
+    // TODO iterate through 64 blocks
     int round;
 
     bs_transpose(input);
@@ -52,6 +54,7 @@ void aes_ecb_encrypt(word_t * input, word_t (* rk)[BLOCK_SIZE])
 
 void aes_ecb_decrypt(word_t * input, word_t (* rk)[BLOCK_SIZE])
 {
+    // TODO iterate through 64 blocks
     int round;
 
     bs_transpose(input);
@@ -95,7 +98,7 @@ void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * key)
     }
 
 }
-
+// TODO AES CTR
 int main(int argc, char * argv[])
 {
     if (argc < 2)
