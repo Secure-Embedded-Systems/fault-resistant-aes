@@ -117,6 +117,7 @@ int main(int argc, char * argv[])
     bs_expand_key(rk, key_s);
     aes_ecb_encrypt(input,rk);
 
+
     printf("cipher text: \n");
     dump_hex((uint8_t * )input,16);
 
