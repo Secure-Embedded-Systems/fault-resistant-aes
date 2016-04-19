@@ -979,6 +979,29 @@ void bs_mixcolumns_rev(word_t * B)
 
 }
 
+void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * key)
+{
+    // TODO integrate this better
+    expand_key(key);
+
+    int i, j = 0, k, l;
+    for (i = 0; i < KEY_SCHEDULE_SIZE; i += (BLOCK_SIZE/8))
+    {
+        memmove(rk[j], key + i, BLOCK_SIZE / 8);
+
+        for (k = WORDS_PER_BLOCK; k < 128; k += WORDS_PER_BLOCK)
+        {
+            for (l = 0; l < WORDS_PER_BLOCK; l++)
+            {
+                rk[j][k + l] = rk[j][l];
+            }
+        }
+        bs_transpose(rk[j]);
+        j++;
+    }
+
+}
+
 void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
 {
     int round;

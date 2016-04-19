@@ -29,46 +29,6 @@ void dump_block(word_t * h, int len)
     printf("\n");
 }
 
-void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
-{
-    int round;
-    bs_transpose(state);
-
-    bs_addroundkey(state,rk[0]);
-    for (round = 1; round < 10; round++)
-    {
-        bs_apply_sbox(state);
-        bs_shiftrows(state);
-        bs_mixcolumns(state);
-        bs_addroundkey(state,rk[round]);
-    }
-    bs_apply_sbox(state);
-    bs_shiftrows(state);
-    bs_addroundkey(state,rk[10]);
-
-    bs_transpose_rev(state);
-}
-
-void bs_cipher_rev(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
-{
-    int round;
-    bs_transpose(state);
-
-    bs_addroundkey(state,rk[10]);
-    for (round = 9; round > 0; round--)
-    {
-        bs_shiftrows_rev(state);
-        bs_apply_sbox_rev(state);
-        bs_addroundkey(state,rk[round]);
-        bs_mixcolumns_rev(state);
-    }
-    bs_shiftrows_rev(state);
-    bs_apply_sbox_rev(state);
-    bs_addroundkey(state,rk[0]);
-
-    bs_transpose_rev(state);
-}
-
 void aes_ecb_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, word_t (* rk)[BLOCK_SIZE])
 {
     word_t input_space[BLOCK_SIZE];
@@ -124,29 +84,6 @@ void aes_ecb_decrypt(uint8_t * outputb, uint8_t * inputb, size_t size, word_t (*
     }
 }
 
-
-void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * key)
-{
-    // TODO integrate this better
-    expand_key(key);
-
-    int i, j = 0, k, l;
-    for (i = 0; i < KEY_SCHEDULE_SIZE; i += (BLOCK_SIZE/8))
-    {
-        memmove(rk[j], key + i, BLOCK_SIZE / 8);
-
-        for (k = WORDS_PER_BLOCK; k < 128; k += WORDS_PER_BLOCK)
-        {
-            for (l = 0; l < WORDS_PER_BLOCK; l++)
-            {
-                rk[j][k + l] = rk[j][l];
-            }
-        }
-        bs_transpose(rk[j]);
-        j++;
-    }
-
-}
 // TODO AES CTR
 int main(int argc, char * argv[])
 {

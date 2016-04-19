@@ -53,6 +53,7 @@ void bs_apply_sbox_rev(word_t * input);
 
 
 void expand_key(unsigned char *in);
+void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * key);
 
 void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE]);
 void bs_cipher_rev(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE]);
