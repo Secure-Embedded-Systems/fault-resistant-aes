@@ -358,9 +358,15 @@ void bs_sbox(word_t U[8])
 
 void bs_transpose(word_t * blocks)
 {
-    int i,j,k;
     word_t transpose[BLOCK_SIZE];
     memset(transpose, 0, sizeof(transpose));
+    bs_transpose_dst(transpose,blocks);
+    memmove(blocks,transpose,sizeof(transpose));
+}
+
+void bs_transpose_dst(word_t * transpose, word_t * blocks)
+{
+    int i,j,k;
     word_t w;
     for(k=0; k < WORD_SIZE; k++)
     {
@@ -374,7 +380,6 @@ void bs_transpose(word_t * blocks)
             }
         }
     }
-    memmove(blocks,transpose,sizeof(transpose));
 }
 
 void bs_transpose_rev(word_t * blocks)
@@ -974,7 +979,45 @@ void bs_mixcolumns_rev(word_t * B)
 
 }
 
+void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
+{
+    int round;
+    bs_transpose(state);
 
+    bs_addroundkey(state,rk[0]);
+    for (round = 1; round < 10; round++)
+    {
+        bs_apply_sbox(state);
+        bs_shiftrows(state);
+        bs_mixcolumns(state);
+        bs_addroundkey(state,rk[round]);
+    }
+    bs_apply_sbox(state);
+    bs_shiftrows(state);
+    bs_addroundkey(state,rk[10]);
+
+    bs_transpose_rev(state);
+}
+
+void bs_cipher_rev(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
+{
+    int round;
+    bs_transpose(state);
+
+    bs_addroundkey(state,rk[10]);
+    for (round = 9; round > 0; round--)
+    {
+        bs_shiftrows_rev(state);
+        bs_apply_sbox_rev(state);
+        bs_addroundkey(state,rk[round]);
+        bs_mixcolumns_rev(state);
+    }
+    bs_shiftrows_rev(state);
+    bs_apply_sbox_rev(state);
+    bs_addroundkey(state,rk[0]);
+
+    bs_transpose_rev(state);
+}
 
 
 
