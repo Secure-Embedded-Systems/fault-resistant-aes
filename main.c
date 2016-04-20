@@ -29,11 +29,16 @@ void dump_block(word_t * h, int len)
     printf("\n");
 }
 
-void aes_ecb_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, word_t (* rk)[BLOCK_SIZE])
+void aes_ecb_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key)
 {
     word_t input_space[BLOCK_SIZE];
+    word_t rk[11][BLOCK_SIZE];
+
     memset(outputb,0,size);
     word_t * state = (word_t *)outputb;
+
+    memmove(rk[0], key, BLOCK_SIZE/8);
+    bs_expand_key(rk, (uint8_t *)rk[0]);
 
     while (size > 0)
     {
@@ -56,12 +61,16 @@ void aes_ecb_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, word_t (*
     }
 }
 
-
-void aes_ecb_decrypt(uint8_t * outputb, uint8_t * inputb, size_t size, word_t (* rk)[BLOCK_SIZE])
+void aes_ecb_decrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key)
 {
     word_t input_space[BLOCK_SIZE];
+    word_t rk[11][BLOCK_SIZE];
+
     memset(outputb,0,size);
     word_t * state = (word_t *)outputb;
+    
+    memmove(rk[0], key, BLOCK_SIZE/8);
+    bs_expand_key(rk, (uint8_t *)rk[0]);
 
     while (size > 0)
     {
@@ -94,24 +103,19 @@ int main(int argc, char * argv[])
     }
     uint8_t key_vector[16] = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
     uint8_t pt_vector[16] =  "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a";
+    uint8_t output[16];
+    uint8_t input[16];
 
-    word_t input[BLOCK_SIZE];
-    word_t output[BLOCK_SIZE];
-    word_t rk[11][BLOCK_SIZE];
     uint8_t key_s[KEY_SCHEDULE_SIZE];
-    memset(key_s, 0, sizeof(key_s));
-    memset(input, 0, sizeof(input));
-    memmove(key_s, key_vector, sizeof(key_vector));
     memmove(input, pt_vector, sizeof(pt_vector));
 
-    bs_expand_key(rk, key_s);
-    aes_ecb_encrypt((uint8_t *)output,(uint8_t *)input,16,rk);
+    aes_ecb_encrypt(output, pt_vector,16,key_vector);
 
 
     printf("cipher text: \n");
-    dump_hex((uint8_t * )output,16);
+    dump_hex(output, 16);
 
-    aes_ecb_decrypt((uint8_t * )input, (uint8_t * )output, 16, rk);
+    aes_ecb_decrypt(input, output, 16, key_vector);
 
     printf("plain text: \n");
     dump_hex((uint8_t * )input,16);

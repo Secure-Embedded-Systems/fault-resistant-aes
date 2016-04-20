@@ -979,9 +979,11 @@ void bs_mixcolumns_rev(word_t * B)
 
 }
 
-void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * key)
+void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
 {
     // TODO integrate this better
+    uint8_t key[KEY_SCHEDULE_SIZE];
+    memmove(key,_key,BLOCK_SIZE/8);
     expand_key(key);
 
     int i, j = 0, k, l;
