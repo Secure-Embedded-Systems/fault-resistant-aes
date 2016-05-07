@@ -35,3 +35,7 @@ bitslice
 # vim
 *.swp
 rng
+
+#misc
+test
+random

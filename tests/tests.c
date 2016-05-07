@@ -1,450 +1,91 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include "bs.h"
 
-typedef uint8_t state_t[4][4];
-void MixColumns(state_t * state);
-void InvMixColumns(state_t * state);
-
-void ShiftRows(state_t * state);
-void InvShiftRows(state_t * state);
-
-
-
-#define bs_dump(x) word_dump(x, BLOCK_SIZE)
-
-word_t RINPUT[BLOCK_SIZE];
-word_t RINPUT_RES[BLOCK_SIZE];
-
-void hex_dump(uint8_t * h, int len)
+void aes_ecb_test()
 {
-    while(len--)
-        printf("%02hhx",*h++);
-    printf("\n");
-}
-
-void word_dump(word_t * h, int len)
-{
-    while(len--)
-        if ((len+1) % 8) printf("%" WPAD WFMT "\n",*h++);
-        else printf("%d: %" WPAD WFMT "\n",128-len-1,*h++);
-
-    printf("\n");
-}
-
-void block_dump(word_t * h, int len)
-{
-    while(len-=2 >= 0)
-        printf("%" WPAD WFMT"%" WPAD WFMT  "\n",*h++,*h++);
-    printf("\n");
-}
-
-
-
-
-extern uint8_t INPUT[WORD_SIZE/8][BLOCK_SIZE/8 + 1];
-extern uint8_t INPUTZ[WORD_SIZE/8][BLOCK_SIZE/8 + 1];
-
-void test_transpose()
-{
-    word_t blocks[ BLOCK_SIZE ];
-    word_t blocks_tmp[ BLOCK_SIZE ];
-    memset(blocks,0, sizeof(blocks));
-    memset(blocks_tmp,0, sizeof(blocks));
-    memmove(blocks,INPUT,sizeof(blocks));
-    bs_transpose(blocks);
-
-    bs_transpose_rev(blocks);
+    uint8_t key_vector[16] = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
+    uint8_t pt_vector[16] =  "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a";
+    uint8_t ct_vector[16] =  "\x3a\xd7\x7b\xb4\x0d\x7a\x36\x60\xa8\x9e\xca\xf3\x24\x66\xef\x97";
+    uint8_t output[16];
+    uint8_t input[16];
     
-    printf("TRANSPOSE original:\n");
-    bs_dump((word_t*)INPUT);
+    printf("AES ECB\n");
 
-    printf("TRANSPOSE output:\n");
-    bs_dump(blocks);
+    aes_ecb_encrypt(output, pt_vector,16,key_vector);
 
-    printf("TRANSPOSE reverse:\n");
-    bs_dump(blocks_tmp);
-}
 
-void test_sbox()
-{
-    word_t * sbox_in = (word_t * ) INPUT;
-    word_t sbox_out[8];
-    word_t sbox_rev[8];
-    int idx = 7;
+    printf("cipher text: \n");
+    dump_hex(output, 16);
 
-    printf("SBOX input:\n");
-    word_dump(sbox_in,8);
+    aes_ecb_decrypt(input, output, 16, key_vector);
 
-    bs_sbox(sbox_in);
-    
-    printf("SBOX output:\n");
-    word_dump(sbox_in,8);
+    printf("plain text: \n");
+    dump_hex((uint8_t * )input,16);
 
-    bs_sbox_rev(sbox_in);
-
-    printf("SBOX reverse:\n");
-    word_dump(sbox_in,8);
-}
-void test_mixcolumns()
-{
-    word_t mixcolumn[BLOCK_SIZE];
-    word_t mixcolumn_out[BLOCK_SIZE];
-
-    memmove(mixcolumn, INPUT[0], 8 * BLOCK_SIZE);
-
-    printf("MIXCOLUMNS input:\n");
-    word_dump(mixcolumn,BLOCK_SIZE);
-
-    bs_mixcolumns(mixcolumn);
-
-    printf("MIXCOLUMNS output:\n");
-    word_dump(mixcolumn_out,BLOCK_SIZE);
-    
-    memset(mixcolumn,0,sizeof(mixcolumn));
-    bs_mixcolumns_rev(mixcolumn);
-    printf("MIXCOLUMNS reverse:\n");
-    word_dump(mixcolumn,BLOCK_SIZE);
-}
-void test_shiftrows()
-{
-    word_t shiftrow[BLOCK_SIZE];
-    word_t shiftrow_out[BLOCK_SIZE];
-
-    memmove(shiftrow, INPUT[0], 8 * BLOCK_SIZE);
-    printf("SHIFTROWS input:\n");
-    word_dump(shiftrow,BLOCK_SIZE);
-    
-    bs_shiftrows(shiftrow);
-    printf("SHIFTROWS output:\n");
-    word_dump(shiftrow,BLOCK_SIZE);
-    
-    memset(shiftrow,0,sizeof(shiftrow));
-    bs_shiftrows_rev(shiftrow);
-   
-    printf("SHIFTROWS reverse:\n");
-    word_dump(shiftrow,BLOCK_SIZE);
-}
-
-void bs_addroundkey(word_t * B, word_t * rk)
-{
-    int i;
-    for (i = 0; i < BLOCK_SIZE; i++)
-        B[i] ^= rk[i];
-}
-
-void test_addroundkey()
-{
-    word_t input[BLOCK_SIZE];
-    word_t output[BLOCK_SIZE];
-    word_t rk[11][BLOCK_SIZE];
-    int i;
-    for (i=0; i<11; i++)
+    if (memcmp(pt_vector, input, 16) != 0)
     {
-        memset(rk[i], (i+1)*253, BLOCK_SIZE);
-    }
-    memmove(input, INPUT, BLOCK_SIZE * WORD_SIZE / 8);
-
-    memmove(output, input, BLOCK_SIZE * WORD_SIZE / 8);
-
-    for (i=0; i < 10; i++)
-        bs_addroundkey(output, rk[i]);
-
-    for (i=9; i >= 0; i--)
-        bs_addroundkey(output, rk[i]);
-    
-    printf("test round key output:\n");
-    block_dump(output,WORD_SIZE);
-
-}
-
-void bs_apply_sbox(word_t * input)
-{
-    int i;
-    for(i=0; i < BLOCK_SIZE; i+=8)
-    {
-        bs_sbox(input+i);
-    }
-}
-
-void bs_apply_sbox_rev(word_t * input)
-{
-    int i;
-    for(i=0; i < BLOCK_SIZE; i+=8)
-    {
-        bs_sbox_rev(input+i);
-    }
-}
-
-#define check_mem(m1,m2) _check_mem(m1,m2,__LINE__)
-
-static void _check_mem(void * m1, void * m2, int line)
-{
-    if (memcmp(m1,m2,BLOCK_SIZE/8)== 0)
-    {
-        printf("(%d) mem is same\n", line);
-    }
-    else
-    {
-        printf("(%d) mem is not the same\n",line);
-    }
-}
-
-void test_all_steps()
-{
-    word_t input[BLOCK_SIZE];
-    word_t input2[BLOCK_SIZE];
-    word_t output[BLOCK_SIZE];
-    word_t trans[BLOCK_SIZE];
-    word_t rk[11][BLOCK_SIZE];
-    int i;
-    for (i=0; i<11; i++)
-    {
-        memset(rk[i], i, BLOCK_SIZE);
-    }
-
-    memmove(input, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
-    memmove(input2, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
-    memset(trans,0, BLOCK_SIZE * WORD_SIZE / 8);
-
-
-    bs_transpose(input);
-    bs_mixcolumns(input);
-    bs_transpose_rev(input);
-    MixColumns((state_t *)input2);
-    check_mem(input,input2);
-
-
-    bs_transpose(input);
-    bs_shiftrows(input);
-    bs_transpose_rev(input);
-    ShiftRows((state_t *)input2);
-    check_mem(input,input2);
-
-    bs_transpose(input);
-    bs_mixcolumns(input);
-    bs_transpose_rev(input);
-    MixColumns((state_t *)input2);
-    check_mem(input,input2);
-
-
-    bs_transpose(input);
-    bs_shiftrows(input);
-    bs_transpose_rev(input);
-    ShiftRows((state_t *)input2);
-    check_mem(input,input2);
-
-
-    bs_transpose(input);
-    bs_shiftrows_rev(input);
-    bs_transpose_rev(input);
-    InvShiftRows((state_t *)input2);
-    check_mem(input,input2);
-
-    bs_transpose(input);
-    bs_mixcolumns_rev(input);
-    bs_transpose_rev(input);
-    InvMixColumns((state_t *)input2);
-    check_mem(input,input2);
-
-    bs_transpose(input);
-    bs_shiftrows_rev(input);
-    bs_transpose_rev(input);
-    InvShiftRows((state_t *)input2);
-    check_mem(input,input2);
-
-    bs_transpose(input);
-    bs_mixcolumns_rev(input);
-    bs_transpose_rev(input);
-    InvMixColumns((state_t *)input2);
-    check_mem(input,input2);
-
-
-    int wow = 0;
-
-    for (wow = 0; wow < 10; wow++)
-    {
-        bs_addroundkey(input, rk[3]);
-        bs_shiftrows(input);
-        bs_mixcolumns(input);
-        bs_shiftrows(input);
-        bs_addroundkey(input, rk[3]);
-        bs_apply_sbox(input);
-        bs_shiftrows(input);
-    }
-
-    for (wow = 0; wow < 10; wow++)
-    {
-        bs_shiftrows_rev(input);
-        bs_apply_sbox_rev(input);
-        bs_addroundkey(input, rk[3]);
-        bs_shiftrows_rev(input);
-        bs_mixcolumns_rev(input);
-        bs_shiftrows_rev(input);
-        bs_addroundkey(input, rk[3]);
-    }
-    /*bs_apply_sbox_rev(input,input);*/
-    /*ShiftRows((state_t *)input2);*/
-    /*bs_mixcolumns_rev(input);*/
-    /*block_dump(input, WORD_SIZE);*/
-
-
-    if (memcmp(input,RINPUT,BLOCK_SIZE/8)== 0)
-    {
-        printf("mem is the same\n");
-    }
-    else
-    {
-        printf("mem is not the same\n");
-    }
-
-    /*printf("bs mem:\n");*/
-    /*hex_dump((uint8_t*)input,BLOCK_SIZE/8);*/
-    /*printf("ref mem:\n");*/
-    /*hex_dump((uint8_t*)input2,BLOCK_SIZE/8);*/
-
-}
-
-void test_aes()
-{
-    word_t input[BLOCK_SIZE];
-    word_t input2[BLOCK_SIZE];
-    word_t output[BLOCK_SIZE];
-    word_t rk[11][BLOCK_SIZE];
-    int i;
-    for (i=0; i<11; i++)
-    {
-        memset(rk[i], i * 19, BLOCK_SIZE);
-    }
-
-    memmove(input, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
-    memmove(input2, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
-    
-    bs_transpose(input);
-
-    // add round key
-    bs_addroundkey(input,rk[0]);
-    
-
-    int rounds = 1;
-
-    for (; rounds < 10; rounds++)
-    {
-        bs_apply_sbox(input);
-        bs_shiftrows(input);
-        bs_mixcolumns(input);
-        bs_addroundkey(input,rk[i]);
-    }
-
-    bs_apply_sbox(input);
-    bs_shiftrows(input);
-    bs_addroundkey(input,rk[10]);
-
-    // decrypt
-
-    bs_addroundkey(input,rk[10]);
-    // undo rounds
-    for (rounds = 9; rounds > 0; rounds--)
-    {
-        bs_shiftrows_rev(input);
-        bs_apply_sbox_rev(input);
-        bs_addroundkey(input,rk[i]);
-        bs_mixcolumns_rev(input);
-    }
-    bs_shiftrows_rev(input);
-    bs_apply_sbox_rev(input);
-
-    bs_addroundkey(input,rk[0]);
-
-    bs_transpose_rev(input);
-
-    if (memcmp(input,input2,BLOCK_SIZE*WORD_SIZE/8) == 0)
-    {
-        printf("AES test passed!\n");
-    }
-    else
-    {
-        printf("AES test failed!\n");
-    }
-}
-
-
-void test_steps_nested()
-{
-    word_t input[BLOCK_SIZE];
-    word_t input2[BLOCK_SIZE];
-    word_t output[BLOCK_SIZE];
-    word_t rk[11][BLOCK_SIZE];
-    int i;
-    for (i=0; i<11; i++)
-    {
-        memset(rk[i], i * 19, BLOCK_SIZE);
-    }
-
-    memmove(input, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
-    memmove(input2, RINPUT, BLOCK_SIZE * WORD_SIZE / 8);
-
-    bs_transpose(input);
-
-    // add round key
-    bs_addroundkey(input,rk[0]);
-    
-
-    int rounds = 1;
-
-    for (; rounds < 10; rounds++)
-    {
-        bs_apply_sbox(input);
-        bs_shiftrows(input);
-        bs_mixcolumns(input);
-        bs_addroundkey(input,rk[i]);
-    }
-
-    bs_apply_sbox(input);
-    bs_shiftrows(input);
-    bs_addroundkey(input,rk[10]);
-
-    // decrypt
-
-    bs_addroundkey(input,rk[10]);
-    // undo rounds
-    for (rounds = 9; rounds > 0; rounds--)
-    {
-        bs_shiftrows_rev(input);
-        bs_apply_sbox_rev(input);
-        bs_addroundkey(input,rk[i]);
-        bs_mixcolumns_rev(input);
-    }
-    bs_shiftrows_rev(input);
-    bs_apply_sbox_rev(input);
-
-    bs_addroundkey(input,rk[0]);
-
-    memmove(output,input,BLOCK_SIZE*WORD_SIZE/8);
-    printf("all steps nested output:\n");
-    block_dump(output,64);
-}
-
-int main(int argc, char * argv[])
-{
-    if (argc < 2)
-    {
-        fprintf(stderr,"usage: %s <input-file>\n", argv[0]);
+        fprintf(stderr,"error: decrypted ciphertext is not the same as the input plaintext\n");
         exit(1);
     }
-    FILE * r = fopen(argv[1], "r");
-    if (r == NULL)
+    else if (memcmp(ct_vector, output, 16) != 0)
     {
-        perror("fopen");
-        exit(2);
+        fprintf(stderr,"error: ciphertext is not the same as the test vector\n");
+        exit(1);
     }
-    int n = read(fileno(r), RINPUT, sizeof(RINPUT));
-    if (n != sizeof(RINPUT))
-    {
-        fprintf(stderr,"file does not have enough bytes\n");
-        exit(2);
-    }
-    test_aes();
-    return 0;
 }
+
+void aes_ctr_test()
+{
+// Test vector from NIST for 4 input blocks
+#define AES_CTR_TESTS_BYTES 64
+
+    uint8_t key_vector[16] =
+        "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
+
+    uint8_t iv_vector[16]  =
+        "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
+
+    uint8_t pt_vector[AES_CTR_TESTS_BYTES] =
+        "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
+        "\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51"
+        "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef"
+        "\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10"
+        ;
+
+    uint8_t ct_vector[AES_CTR_TESTS_BYTES] =
+        "\x87\x4d\x61\x91\xb6\x20\xe3\x26\x1b\xef\x68\x64\x99\x0d\xb6\xce"
+        "\x98\x06\xf6\x6b\x79\x70\xfd\xff\x86\x17\x18\x7b\xb9\xff\xfd\xff"
+        "\x5a\xe4\xdf\x3e\xdb\xd5\xd3\x5e\x5b\x4f\x09\x02\x0d\xb0\x3e\xab"
+        "\x1e\x03\x1d\xda\x2f\xbe\x03\xd1\x79\x21\x70\xa0\xf3\x00\x9c\xee"
+        ;
+
+    uint8_t output[AES_CTR_TESTS_BYTES];
+    uint8_t input[AES_CTR_TESTS_BYTES];
+
+    printf("AES CTR\n");
+
+    aes_ctr_encrypt(output,pt_vector,AES_CTR_TESTS_BYTES,key_vector, iv_vector);
+
+    printf("cipher text: \n");
+    dump_hex(output,AES_CTR_TESTS_BYTES);
+    
+    aes_ctr_encrypt(input,output,AES_CTR_TESTS_BYTES,key_vector, iv_vector);
+
+    printf("plain text: \n");
+    dump_hex(input,AES_CTR_TESTS_BYTES);
+
+    if (memcmp(pt_vector, input, AES_CTR_TESTS_BYTES) != 0)
+    {
+        fprintf(stderr,"error: decrypted ciphertext is not the same as the input plaintext\n");
+        exit(1);
+    }
+    else if (memcmp(ct_vector, output, AES_CTR_TESTS_BYTES) != 0)
+    {
+        fprintf(stderr,"error: ciphertext is not the same as the test vector\n");
+        exit(1);
+    }
+
+}
+
+
