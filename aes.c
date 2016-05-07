@@ -72,11 +72,14 @@ void aes_ecb_decrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
 
 static void INC_CTR(uint8_t * ctr, uint8_t i)
 {
-    uint8_t n = *ctr;
+    ctr += BLOCK_SIZE/8 - 1;
+    uint8_t n = *(ctr);
     *ctr += i;
-    if (*ctr < n)
+    while(*ctr < n)
     {
-        (*(ctr+1))++;
+        ctr--;
+        n = *ctr;
+        (*ctr)++;
     }
 }
 
@@ -85,20 +88,22 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
     word_t input_space[BLOCK_SIZE];
     word_t rk[11][BLOCK_SIZE];
     word_t ctr[BLOCK_SIZE];
+    uint8_t iv_copy[BLOCK_SIZE/8];
     
     memset(outputb,0,size);
     memset(ctr,0,sizeof(ctr));
+    memmove(iv_copy,iv,BLOCK_SIZE/8);
 
     word_t * state = (word_t *)outputb;
     bs_expand_key(rk, key);
 
-    int i,j=0;
+    int i;
+    uint8_t j = 0;
     for (i = 0; i < BLOCK_SIZE; i += WORDS_PER_BLOCK)
     {
-        memmove(ctr + i, iv, 16);
-        INC_CTR((uint8_t *)(ctr+i),i);
+        memmove(ctr + i, iv_copy, 16);
+        INC_CTR(iv_copy,1);
     }
-
 
     bs_cipher(ctr, rk);
 
@@ -118,18 +123,21 @@ void aes_ctr_decrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
     word_t input_space[BLOCK_SIZE];
     word_t rk[11][BLOCK_SIZE];
     word_t ctr[BLOCK_SIZE];
+    uint8_t iv_copy[BLOCK_SIZE/8];
     
     memset(outputb,0,size);
     memset(ctr,0,sizeof(ctr));
+    memmove(iv_copy,iv,BLOCK_SIZE/8);
 
     word_t * state = (word_t *)outputb;
     bs_expand_key(rk, key);
 
-    int i,j=0;
+    int i;
+    uint8_t j = 0;
     for (i = 0; i < BLOCK_SIZE; i += WORDS_PER_BLOCK)
     {
-        memmove(ctr + i, iv, 16);
-        INC_CTR((uint8_t *)(ctr+i),i);
+        memmove(ctr + i, iv_copy, 16);
+        INC_CTR(iv_copy,1);
     }
 
 
