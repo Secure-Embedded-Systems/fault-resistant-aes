@@ -767,7 +767,6 @@ void bs_mixcolumns(word_t * B)
     Bp[A0+7] = B[A0+6] ^ B[A1+6] ^ B[A1+7] ^ B[A2+7] ^ B[A3+7];
 
 
-    /*printf("A0 == %02hhx\n",transbyte(Bp+A0));*/
 
     //  of = A1 ^ A2
     //  A1 = A1 ^ (0x1b & ((signed char)of>>7));
@@ -797,7 +796,6 @@ void bs_mixcolumns(word_t * B)
     Bp[A1+6] = B[A0+6] ^ B[A1+5] ^ B[A2+5] ^ B[A2+6] ^ B[A3+6];
     Bp[A1+7] = B[A0+7] ^ B[A1+6] ^ B[A2+6] ^ B[A2+7] ^ B[A3+7];
     
-    /*printf("A1 == %02hhx\n",transbyte(Bp+A1));*/
 
     //  of = A2 ^ A3
     //  A2 = A2 ^ (0x1b & ((signed char)of>>7));
@@ -826,7 +824,6 @@ void bs_mixcolumns(word_t * B)
     Bp[A2+6] = B[A0+6] ^ B[A1+6] ^ B[A2+5] ^ B[A3+5] ^ B[A3+6];
     Bp[A2+7] = B[A0+7] ^ B[A1+7] ^ B[A2+6] ^ B[A3+6] ^ B[A3+7];
     
-    /*printf("A2 == %02hhx\n",transbyte(Bp+A2));*/
 
     //  A3 = A0 ^ A3
     //  A3 = A3 ^ (0x1b & ((signed char)of>>7));
@@ -854,7 +851,6 @@ void bs_mixcolumns(word_t * B)
     Bp[A3+6] = B[A0+6] ^ B[A0+5] ^ B[A1+6] ^ B[A2+6] ^ B[A3+5];
     Bp[A3+7] = B[A0+7] ^ B[A0+6] ^ B[A1+7] ^ B[A2+7] ^ B[A3+6];
     
-    /*printf("A3 == %02hhx\n",transbyte(Bp+A3));*/
 
     //
     Bp += BLOCK_SIZE/4;

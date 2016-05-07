@@ -2,7 +2,7 @@ src = $(wildcard *.c)
 obj = $(src:.c=.o)
 
 LDFLAGS =
-CFLAGS = -O3
+CFLAGS = -O2
 
 name = bitslice
 
