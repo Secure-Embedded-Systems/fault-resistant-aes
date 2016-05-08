@@ -15,7 +15,7 @@ void dump_word(word_t * h, int len)
 {
     while(len--)
         if ((len+1) % 8) printf("%" WPAD WFMT "\n",*h++);
-        else printf("%d: %" WPAD WFMT "\n",128-len-1,*h++);
+        else printf("%d:\n%" WPAD WFMT "\n",128-len-1,*h++);
 
     printf("\n");
 }

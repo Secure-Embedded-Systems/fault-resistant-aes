@@ -15,5 +15,6 @@ void dump_block(word_t * h, int len);
 #endif
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
+#define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
 
 #endif
