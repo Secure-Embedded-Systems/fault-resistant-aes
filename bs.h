@@ -12,21 +12,25 @@
 #if (WORD_SIZE==64)
     typedef uint64_t    word_t;
     #define ONE         1ULL
+    #define MUL_SHIFT   6
     #define WFMT        "lx"
     #define WPAD        "016"
 #elif (WORD_SIZE==32)
     typedef uint32_t    word_t;
     #define ONE         1UL
+    #define MUL_SHIFT   5
     #define WFMT        "x"
     #define WPAD        "08"
 #elif (WORD_SIZE==16)
     typedef uint16_t    word_t;
     #define ONE         1
+    #define MUL_SHIFT   4
     #define WFMT        "hx"
     #define WPAD        "04"
 #elif (WORD_SIZE==8)
     typedef uint8_t     word_t;
     #define ONE         1
+    #define MUL_SHIFT   3
     #define WFMT        "hhx"
     #define WPAD        "02"
 #else

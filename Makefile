@@ -1,8 +1,8 @@
 src = $(wildcard *.c)
 obj = $(src:.c=.o)
 
-LDFLAGS = -Wl,--gc-sections
-CFLAGS = -O2 -fdata-sections -ffunction-sections
+LDFLAGS = -Wl,--gc-sections -lcrypto
+CFLAGS = -O3 -fdata-sections -ffunction-sections -DUNROLL_TRANSPOSE
 
 name = bitslice
 

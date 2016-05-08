@@ -16,9 +16,6 @@
 #include <stdio.h>
 #endif
 
-
-
-// TODO AES CTR
 int main(int argc, char * argv[])
 {
 
@@ -30,11 +27,9 @@ int main(int argc, char * argv[])
     return 0;
 #endif
 
-    if (argc < 2)
-    {
-        fprintf(stderr,"usage: %s <input-file>\n", argv[0]);
-        exit(1);
-    }
+    cli_app(argc,argv);
+
+
     return 0;
 }
 
