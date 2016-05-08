@@ -1,7 +1,7 @@
 Bitsliced AES
 -------------
 
-Bitslicing is the idea to compute steps in an algorithm 1 bit at a time.  Each bit in a processor word would be a part
+Bitslicing is a technique to compute steps in an algorithm 1 bit at a time.  Each bit in a processor word would be a part
 of a different data stream for that particular algorithm.  It is attractive because then it can run many different streams 
 in parallel (depending on the word length).  E.g. a 32 bit word length can compute 32 different streams in parallel.
 
@@ -21,3 +21,7 @@ This bitsliced implementation
 -----------------------------
 
 This work exists for education and research.  This repository exists as a reference for people working on bitslicing.
+
+Approximate footprint on 64 bit Intel with GCC 4.8.4: 8000-9000 KB
+
+Performance on 64 bit Intel 4790: TDB 
