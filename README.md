@@ -21,7 +21,39 @@ This bitsliced implementation
 -----------------------------
 
 This work exists for education and research.  This repository exists as a reference for people working on bitslicing.
+It is written entirely in C.
 
-Approximate footprint for encryption only on 64 bit Intel with GCC 4.8.4: 8000-9000 bytes
+Performance measurements done for AES-CTR on a 64 bit 4 GHz Intel 4790 and compiled with GCC 4.8.4.
 
-Encryption performance on 64 bit Intel 4790: TDB 
+|                      |footprint | throughput |
+|----------------------|----------|------------|
+|Performance optimized |  12,150 bytes  | 51 cycles/byte |
+|Footprint optimized   | 8,526 bytes | 81 cycles/byte |
+
+Performance could be improved by about 5-10x by writting in assembly and ensuring
+more operations stay in registers rather then spill to memory.
+
+
+Compiling
+----------
+
+Compile the benchmarking program by running:
+
+```bash
+make
+```
+
+Benchmark program requires OpenSSL.
+
+
+Compile the test program by running:
+
+```bash
+make test
+```
+
+Change to the word length of your processor by editing the "WORD_SIZE" macro in bs.h.  Optimize for
+footprint by using "-O2" instead of "-O3" in the Makefile and also deleting the "-DUNROLL_TRANSPOSE" 
+flag.
+
+
