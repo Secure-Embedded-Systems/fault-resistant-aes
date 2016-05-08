@@ -420,294 +420,135 @@ void bs_transpose_rev(word_t * blocks)
 
 void bs_shiftrows(word_t * B)
 {
-    word_t Bp[BLOCK_SIZE];
-
-    // Row 0
-    Bp[R0 + B0 + 0] = B[R0 + B0 + 0];
-    Bp[R0 + B0 + 1] = B[R0 + B0 + 1];
-    Bp[R0 + B0 + 2] = B[R0 + B0 + 2];
-    Bp[R0 + B0 + 3] = B[R0 + B0 + 3];
-    Bp[R0 + B0 + 4] = B[R0 + B0 + 4];
-    Bp[R0 + B0 + 5] = B[R0 + B0 + 5];
-    Bp[R0 + B0 + 6] = B[R0 + B0 + 6];
-    Bp[R0 + B0 + 7] = B[R0 + B0 + 7];
-    Bp[R0 + B1 + 0] = B[R0 + B1 + 0];
-    Bp[R0 + B1 + 1] = B[R0 + B1 + 1];
-    Bp[R0 + B1 + 2] = B[R0 + B1 + 2];
-    Bp[R0 + B1 + 3] = B[R0 + B1 + 3];
-    Bp[R0 + B1 + 4] = B[R0 + B1 + 4];
-    Bp[R0 + B1 + 5] = B[R0 + B1 + 5];
-    Bp[R0 + B1 + 6] = B[R0 + B1 + 6];
-    Bp[R0 + B1 + 7] = B[R0 + B1 + 7];
-    Bp[R0 + B2 + 0] = B[R0 + B2 + 0];
-    Bp[R0 + B2 + 1] = B[R0 + B2 + 1];
-    Bp[R0 + B2 + 2] = B[R0 + B2 + 2];
-    Bp[R0 + B2 + 3] = B[R0 + B2 + 3];
-    Bp[R0 + B2 + 4] = B[R0 + B2 + 4];
-    Bp[R0 + B2 + 5] = B[R0 + B2 + 5];
-    Bp[R0 + B2 + 6] = B[R0 + B2 + 6];
-    Bp[R0 + B2 + 7] = B[R0 + B2 + 7];
-    Bp[R0 + B3 + 0] = B[R0 + B3 + 0];
-    Bp[R0 + B3 + 1] = B[R0 + B3 + 1];
-    Bp[R0 + B3 + 2] = B[R0 + B3 + 2];
-    Bp[R0 + B3 + 3] = B[R0 + B3 + 3];
-    Bp[R0 + B3 + 4] = B[R0 + B3 + 4];
-    Bp[R0 + B3 + 5] = B[R0 + B3 + 5];
-    Bp[R0 + B3 + 6] = B[R0 + B3 + 6];
-    Bp[R0 + B3 + 7] = B[R0 + B3 + 7];
+    word_t Bp_space[BLOCK_SIZE];
+    word_t * Bp = Bp_space;
+    word_t * Br0 = B + 0;
+    word_t * Br1 = B + 32;
+    word_t * Br2 = B + 64;
+    word_t * Br3 = B + 96;
+    uint8_t offsetr0 = 0;
+    uint8_t offsetr1 = 32;
+    uint8_t offsetr2 = 64;
+    uint8_t offsetr3 = 96;
 
 
-    // Row 1
-    Bp[R1 + B0 + 0] = B[R1 + B1 + 0];
-    Bp[R1 + B0 + 1] = B[R1 + B1 + 1];
-    Bp[R1 + B0 + 2] = B[R1 + B1 + 2];
-    Bp[R1 + B0 + 3] = B[R1 + B1 + 3];
-    Bp[R1 + B0 + 4] = B[R1 + B1 + 4];
-    Bp[R1 + B0 + 5] = B[R1 + B1 + 5];
-    Bp[R1 + B0 + 6] = B[R1 + B1 + 6];
-    Bp[R1 + B0 + 7] = B[R1 + B1 + 7];
-    Bp[R1 + B1 + 0] = B[R1 + B2 + 0];
-    Bp[R1 + B1 + 1] = B[R1 + B2 + 1];
-    Bp[R1 + B1 + 2] = B[R1 + B2 + 2];
-    Bp[R1 + B1 + 3] = B[R1 + B2 + 3];
-    Bp[R1 + B1 + 4] = B[R1 + B2 + 4];
-    Bp[R1 + B1 + 5] = B[R1 + B2 + 5];
-    Bp[R1 + B1 + 6] = B[R1 + B2 + 6];
-    Bp[R1 + B1 + 7] = B[R1 + B2 + 7];
-    Bp[R1 + B2 + 0] = B[R1 + B3 + 0];
-    Bp[R1 + B2 + 1] = B[R1 + B3 + 1];
-    Bp[R1 + B2 + 2] = B[R1 + B3 + 2];
-    Bp[R1 + B2 + 3] = B[R1 + B3 + 3];
-    Bp[R1 + B2 + 4] = B[R1 + B3 + 4];
-    Bp[R1 + B2 + 5] = B[R1 + B3 + 5];
-    Bp[R1 + B2 + 6] = B[R1 + B3 + 6];
-    Bp[R1 + B2 + 7] = B[R1 + B3 + 7];
-    Bp[R1 + B3 + 0] = B[R1 + B0 + 0];
-    Bp[R1 + B3 + 1] = B[R1 + B0 + 1];
-    Bp[R1 + B3 + 2] = B[R1 + B0 + 2];
-    Bp[R1 + B3 + 3] = B[R1 + B0 + 3];
-    Bp[R1 + B3 + 4] = B[R1 + B0 + 4];
-    Bp[R1 + B3 + 5] = B[R1 + B0 + 5];
-    Bp[R1 + B3 + 6] = B[R1 + B0 + 6];
-    Bp[R1 + B3 + 7] = B[R1 + B0 + 7];
+    int i;
+    for(i=0; i<4; i++)
+    {
+        Bp[B0 + 0] = Br0[0];
+        Bp[B0 + 1] = Br0[1];
+        Bp[B0 + 2] = Br0[2];
+        Bp[B0 + 3] = Br0[3];
+        Bp[B0 + 4] = Br0[4];
+        Bp[B0 + 5] = Br0[5];
+        Bp[B0 + 6] = Br0[6];
+        Bp[B0 + 7] = Br0[7];
+        Bp[B1 + 0] = Br1[0];
+        Bp[B1 + 1] = Br1[1];
+        Bp[B1 + 2] = Br1[2];
+        Bp[B1 + 3] = Br1[3];
+        Bp[B1 + 4] = Br1[4];
+        Bp[B1 + 5] = Br1[5];
+        Bp[B1 + 6] = Br1[6];
+        Bp[B1 + 7] = Br1[7];
+        Bp[B2 + 0] = Br2[0];
+        Bp[B2 + 1] = Br2[1];
+        Bp[B2 + 2] = Br2[2];
+        Bp[B2 + 3] = Br2[3];
+        Bp[B2 + 4] = Br2[4];
+        Bp[B2 + 5] = Br2[5];
+        Bp[B2 + 6] = Br2[6];
+        Bp[B2 + 7] = Br2[7];
+        Bp[B3 + 0] = Br3[0];
+        Bp[B3 + 1] = Br3[1];
+        Bp[B3 + 2] = Br3[2];
+        Bp[B3 + 3] = Br3[3];
+        Bp[B3 + 4] = Br3[4];
+        Bp[B3 + 5] = Br3[5];
+        Bp[B3 + 6] = Br3[6];
+        Bp[B3 + 7] = Br3[7];
 
+        offsetr0 = (offsetr0 + BLOCK_SIZE/16 + BLOCK_SIZE/4) & 0x7f;
+        offsetr1 = (offsetr1 + BLOCK_SIZE/16 + BLOCK_SIZE/4) & 0x7f;
+        offsetr2 = (offsetr2 + BLOCK_SIZE/16 + BLOCK_SIZE/4) & 0x7f;
+        offsetr3 = (offsetr3 + BLOCK_SIZE/16 + BLOCK_SIZE/4) & 0x7f;
 
-    // Row 2
-    Bp[R2 + B0 + 0] = B[R2 + B2 + 0];
-    Bp[R2 + B0 + 1] = B[R2 + B2 + 1];
-    Bp[R2 + B0 + 2] = B[R2 + B2 + 2];
-    Bp[R2 + B0 + 3] = B[R2 + B2 + 3];
-    Bp[R2 + B0 + 4] = B[R2 + B2 + 4];
-    Bp[R2 + B0 + 5] = B[R2 + B2 + 5];
-    Bp[R2 + B0 + 6] = B[R2 + B2 + 6];
-    Bp[R2 + B0 + 7] = B[R2 + B2 + 7];
-    Bp[R2 + B1 + 0] = B[R2 + B3 + 0];
-    Bp[R2 + B1 + 1] = B[R2 + B3 + 1];
-    Bp[R2 + B1 + 2] = B[R2 + B3 + 2];
-    Bp[R2 + B1 + 3] = B[R2 + B3 + 3];
-    Bp[R2 + B1 + 4] = B[R2 + B3 + 4];
-    Bp[R2 + B1 + 5] = B[R2 + B3 + 5];
-    Bp[R2 + B1 + 6] = B[R2 + B3 + 6];
-    Bp[R2 + B1 + 7] = B[R2 + B3 + 7];
-    Bp[R2 + B2 + 0] = B[R2 + B0 + 0];
-    Bp[R2 + B2 + 1] = B[R2 + B0 + 1];
-    Bp[R2 + B2 + 2] = B[R2 + B0 + 2];
-    Bp[R2 + B2 + 3] = B[R2 + B0 + 3];
-    Bp[R2 + B2 + 4] = B[R2 + B0 + 4];
-    Bp[R2 + B2 + 5] = B[R2 + B0 + 5];
-    Bp[R2 + B2 + 6] = B[R2 + B0 + 6];
-    Bp[R2 + B2 + 7] = B[R2 + B0 + 7];
-    Bp[R2 + B3 + 0] = B[R2 + B1 + 0];
-    Bp[R2 + B3 + 1] = B[R2 + B1 + 1];
-    Bp[R2 + B3 + 2] = B[R2 + B1 + 2];
-    Bp[R2 + B3 + 3] = B[R2 + B1 + 3];
-    Bp[R2 + B3 + 4] = B[R2 + B1 + 4];
-    Bp[R2 + B3 + 5] = B[R2 + B1 + 5];
-    Bp[R2 + B3 + 6] = B[R2 + B1 + 6];
-    Bp[R2 + B3 + 7] = B[R2 + B1 + 7];
+        Br0 = B + offsetr0;
+        Br1 = B + offsetr1;
+        Br2 = B + offsetr2;
+        Br3 = B + offsetr3;
 
-
-    // Row 3
-    Bp[R3 + B0 + 0] = B[R3 + B3 + 0];
-    Bp[R3 + B0 + 1] = B[R3 + B3 + 1];
-    Bp[R3 + B0 + 2] = B[R3 + B3 + 2];
-    Bp[R3 + B0 + 3] = B[R3 + B3 + 3];
-    Bp[R3 + B0 + 4] = B[R3 + B3 + 4];
-    Bp[R3 + B0 + 5] = B[R3 + B3 + 5];
-    Bp[R3 + B0 + 6] = B[R3 + B3 + 6];
-    Bp[R3 + B0 + 7] = B[R3 + B3 + 7];
-    Bp[R3 + B1 + 0] = B[R3 + B0 + 0];
-    Bp[R3 + B1 + 1] = B[R3 + B0 + 1];
-    Bp[R3 + B1 + 2] = B[R3 + B0 + 2];
-    Bp[R3 + B1 + 3] = B[R3 + B0 + 3];
-    Bp[R3 + B1 + 4] = B[R3 + B0 + 4];
-    Bp[R3 + B1 + 5] = B[R3 + B0 + 5];
-    Bp[R3 + B1 + 6] = B[R3 + B0 + 6];
-    Bp[R3 + B1 + 7] = B[R3 + B0 + 7];
-    Bp[R3 + B2 + 0] = B[R3 + B1 + 0];
-    Bp[R3 + B2 + 1] = B[R3 + B1 + 1];
-    Bp[R3 + B2 + 2] = B[R3 + B1 + 2];
-    Bp[R3 + B2 + 3] = B[R3 + B1 + 3];
-    Bp[R3 + B2 + 4] = B[R3 + B1 + 4];
-    Bp[R3 + B2 + 5] = B[R3 + B1 + 5];
-    Bp[R3 + B2 + 6] = B[R3 + B1 + 6];
-    Bp[R3 + B2 + 7] = B[R3 + B1 + 7];
-    Bp[R3 + B3 + 0] = B[R3 + B2 + 0];
-    Bp[R3 + B3 + 1] = B[R3 + B2 + 1];
-    Bp[R3 + B3 + 2] = B[R3 + B2 + 2];
-    Bp[R3 + B3 + 3] = B[R3 + B2 + 3];
-    Bp[R3 + B3 + 4] = B[R3 + B2 + 4];
-    Bp[R3 + B3 + 5] = B[R3 + B2 + 5];
-    Bp[R3 + B3 + 6] = B[R3 + B2 + 6];
-    Bp[R3 + B3 + 7] = B[R3 + B2 + 7];
-
-    memmove(B,Bp,sizeof(Bp));
+        Bp += 8;
+    }
+    memmove(B,Bp_space,sizeof(Bp_space));
 }
+
 
 void bs_shiftrows_rev(word_t * B)
 {
-    word_t Bp[BLOCK_SIZE];
-    // Row 0
-    Bp[R0 + B0 + 0] = B[R0 + B0 + 0];
-    Bp[R0 + B0 + 1] = B[R0 + B0 + 1];
-    Bp[R0 + B0 + 2] = B[R0 + B0 + 2];
-    Bp[R0 + B0 + 3] = B[R0 + B0 + 3];
-    Bp[R0 + B0 + 4] = B[R0 + B0 + 4];
-    Bp[R0 + B0 + 5] = B[R0 + B0 + 5];
-    Bp[R0 + B0 + 6] = B[R0 + B0 + 6];
-    Bp[R0 + B0 + 7] = B[R0 + B0 + 7];
-    Bp[R0 + B1 + 0] = B[R0 + B1 + 0];
-    Bp[R0 + B1 + 1] = B[R0 + B1 + 1];
-    Bp[R0 + B1 + 2] = B[R0 + B1 + 2];
-    Bp[R0 + B1 + 3] = B[R0 + B1 + 3];
-    Bp[R0 + B1 + 4] = B[R0 + B1 + 4];
-    Bp[R0 + B1 + 5] = B[R0 + B1 + 5];
-    Bp[R0 + B1 + 6] = B[R0 + B1 + 6];
-    Bp[R0 + B1 + 7] = B[R0 + B1 + 7];
-    Bp[R0 + B2 + 0] = B[R0 + B2 + 0];
-    Bp[R0 + B2 + 1] = B[R0 + B2 + 1];
-    Bp[R0 + B2 + 2] = B[R0 + B2 + 2];
-    Bp[R0 + B2 + 3] = B[R0 + B2 + 3];
-    Bp[R0 + B2 + 4] = B[R0 + B2 + 4];
-    Bp[R0 + B2 + 5] = B[R0 + B2 + 5];
-    Bp[R0 + B2 + 6] = B[R0 + B2 + 6];
-    Bp[R0 + B2 + 7] = B[R0 + B2 + 7];
-    Bp[R0 + B3 + 0] = B[R0 + B3 + 0];
-    Bp[R0 + B3 + 1] = B[R0 + B3 + 1];
-    Bp[R0 + B3 + 2] = B[R0 + B3 + 2];
-    Bp[R0 + B3 + 3] = B[R0 + B3 + 3];
-    Bp[R0 + B3 + 4] = B[R0 + B3 + 4];
-    Bp[R0 + B3 + 5] = B[R0 + B3 + 5];
-    Bp[R0 + B3 + 6] = B[R0 + B3 + 6];
-    Bp[R0 + B3 + 7] = B[R0 + B3 + 7];
+    word_t Bp_space[BLOCK_SIZE];
+    word_t * Bp = Bp_space;
+    word_t * Br0 = Bp + 0;
+    word_t * Br1 = Bp + 32;
+    word_t * Br2 = Bp + 64;
+    word_t * Br3 = Bp + 96;
+    uint8_t offsetr0 = 0;
+    uint8_t offsetr1 = 32;
+    uint8_t offsetr2 = 64;
+    uint8_t offsetr3 = 96;
 
 
-    // Row 1
-    Bp[R1 + B1 + 0] = B[R1 + B0 + 0];
-    Bp[R1 + B1 + 1] = B[R1 + B0 + 1];
-    Bp[R1 + B1 + 2] = B[R1 + B0 + 2];
-    Bp[R1 + B1 + 3] = B[R1 + B0 + 3];
-    Bp[R1 + B1 + 4] = B[R1 + B0 + 4];
-    Bp[R1 + B1 + 5] = B[R1 + B0 + 5];
-    Bp[R1 + B1 + 6] = B[R1 + B0 + 6];
-    Bp[R1 + B1 + 7] = B[R1 + B0 + 7];
-    Bp[R1 + B2 + 0] = B[R1 + B1 + 0];
-    Bp[R1 + B2 + 1] = B[R1 + B1 + 1];
-    Bp[R1 + B2 + 2] = B[R1 + B1 + 2];
-    Bp[R1 + B2 + 3] = B[R1 + B1 + 3];
-    Bp[R1 + B2 + 4] = B[R1 + B1 + 4];
-    Bp[R1 + B2 + 5] = B[R1 + B1 + 5];
-    Bp[R1 + B2 + 6] = B[R1 + B1 + 6];
-    Bp[R1 + B2 + 7] = B[R1 + B1 + 7];
-    Bp[R1 + B3 + 0] = B[R1 + B2 + 0];
-    Bp[R1 + B3 + 1] = B[R1 + B2 + 1];
-    Bp[R1 + B3 + 2] = B[R1 + B2 + 2];
-    Bp[R1 + B3 + 3] = B[R1 + B2 + 3];
-    Bp[R1 + B3 + 4] = B[R1 + B2 + 4];
-    Bp[R1 + B3 + 5] = B[R1 + B2 + 5];
-    Bp[R1 + B3 + 6] = B[R1 + B2 + 6];
-    Bp[R1 + B3 + 7] = B[R1 + B2 + 7];
-    Bp[R1 + B0 + 0] = B[R1 + B3 + 0];
-    Bp[R1 + B0 + 1] = B[R1 + B3 + 1];
-    Bp[R1 + B0 + 2] = B[R1 + B3 + 2];
-    Bp[R1 + B0 + 3] = B[R1 + B3 + 3];
-    Bp[R1 + B0 + 4] = B[R1 + B3 + 4];
-    Bp[R1 + B0 + 5] = B[R1 + B3 + 5];
-    Bp[R1 + B0 + 6] = B[R1 + B3 + 6];
-    Bp[R1 + B0 + 7] = B[R1 + B3 + 7];
+    int i;
+    for(i=0; i<4; i++)
+    {
+        Br0[0] = B[B0 + 0];
+        Br0[1] = B[B0 + 1];
+        Br0[2] = B[B0 + 2];
+        Br0[3] = B[B0 + 3];
+        Br0[4] = B[B0 + 4];
+        Br0[5] = B[B0 + 5];
+        Br0[6] = B[B0 + 6];
+        Br0[7] = B[B0 + 7];
+        Br1[0] = B[B1 + 0];
+        Br1[1] = B[B1 + 1];
+        Br1[2] = B[B1 + 2];
+        Br1[3] = B[B1 + 3];
+        Br1[4] = B[B1 + 4];
+        Br1[5] = B[B1 + 5];
+        Br1[6] = B[B1 + 6];
+        Br1[7] = B[B1 + 7];
+        Br2[0] = B[B2 + 0];
+        Br2[1] = B[B2 + 1];
+        Br2[2] = B[B2 + 2];
+        Br2[3] = B[B2 + 3];
+        Br2[4] = B[B2 + 4];
+        Br2[5] = B[B2 + 5];
+        Br2[6] = B[B2 + 6];
+        Br2[7] = B[B2 + 7];
+        Br3[0] = B[B3 + 0];
+        Br3[1] = B[B3 + 1];
+        Br3[2] = B[B3 + 2];
+        Br3[3] = B[B3 + 3];
+        Br3[4] = B[B3 + 4];
+        Br3[5] = B[B3 + 5];
+        Br3[6] = B[B3 + 6];
+        Br3[7] = B[B3 + 7];
 
+        offsetr0 = (offsetr0 + BLOCK_SIZE/16 + BLOCK_SIZE/4) & 0x7f;
+        offsetr1 = (offsetr1 + BLOCK_SIZE/16 + BLOCK_SIZE/4) & 0x7f;
+        offsetr2 = (offsetr2 + BLOCK_SIZE/16 + BLOCK_SIZE/4) & 0x7f;
+        offsetr3 = (offsetr3 + BLOCK_SIZE/16 + BLOCK_SIZE/4) & 0x7f;
 
-    // Row 2
-    Bp[R2 + B2 + 0] = B[R2 + B0 + 0];
-    Bp[R2 + B2 + 1] = B[R2 + B0 + 1];
-    Bp[R2 + B2 + 2] = B[R2 + B0 + 2];
-    Bp[R2 + B2 + 3] = B[R2 + B0 + 3];
-    Bp[R2 + B2 + 4] = B[R2 + B0 + 4];
-    Bp[R2 + B2 + 5] = B[R2 + B0 + 5];
-    Bp[R2 + B2 + 6] = B[R2 + B0 + 6];
-    Bp[R2 + B2 + 7] = B[R2 + B0 + 7];
-    Bp[R2 + B3 + 0] = B[R2 + B1 + 0];
-    Bp[R2 + B3 + 1] = B[R2 + B1 + 1];
-    Bp[R2 + B3 + 2] = B[R2 + B1 + 2];
-    Bp[R2 + B3 + 3] = B[R2 + B1 + 3];
-    Bp[R2 + B3 + 4] = B[R2 + B1 + 4];
-    Bp[R2 + B3 + 5] = B[R2 + B1 + 5];
-    Bp[R2 + B3 + 6] = B[R2 + B1 + 6];
-    Bp[R2 + B3 + 7] = B[R2 + B1 + 7];
-    Bp[R2 + B0 + 0] = B[R2 + B2 + 0];
-    Bp[R2 + B0 + 1] = B[R2 + B2 + 1];
-    Bp[R2 + B0 + 2] = B[R2 + B2 + 2];
-    Bp[R2 + B0 + 3] = B[R2 + B2 + 3];
-    Bp[R2 + B0 + 4] = B[R2 + B2 + 4];
-    Bp[R2 + B0 + 5] = B[R2 + B2 + 5];
-    Bp[R2 + B0 + 6] = B[R2 + B2 + 6];
-    Bp[R2 + B0 + 7] = B[R2 + B2 + 7];
-    Bp[R2 + B1 + 0] = B[R2 + B3 + 0];
-    Bp[R2 + B1 + 1] = B[R2 + B3 + 1];
-    Bp[R2 + B1 + 2] = B[R2 + B3 + 2];
-    Bp[R2 + B1 + 3] = B[R2 + B3 + 3];
-    Bp[R2 + B1 + 4] = B[R2 + B3 + 4];
-    Bp[R2 + B1 + 5] = B[R2 + B3 + 5];
-    Bp[R2 + B1 + 6] = B[R2 + B3 + 6];
-    Bp[R2 + B1 + 7] = B[R2 + B3 + 7];
+        Br0 = Bp + offsetr0;
+        Br1 = Bp + offsetr1;
+        Br2 = Bp + offsetr2;
+        Br3 = Bp + offsetr3;
 
-
-    // Row 3
-    Bp[R3 + B3 + 0] = B[R3 + B0 + 0];
-    Bp[R3 + B3 + 1] = B[R3 + B0 + 1];
-    Bp[R3 + B3 + 2] = B[R3 + B0 + 2];
-    Bp[R3 + B3 + 3] = B[R3 + B0 + 3];
-    Bp[R3 + B3 + 4] = B[R3 + B0 + 4];
-    Bp[R3 + B3 + 5] = B[R3 + B0 + 5];
-    Bp[R3 + B3 + 6] = B[R3 + B0 + 6];
-    Bp[R3 + B3 + 7] = B[R3 + B0 + 7];
-    Bp[R3 + B0 + 0] = B[R3 + B1 + 0];
-    Bp[R3 + B0 + 1] = B[R3 + B1 + 1];
-    Bp[R3 + B0 + 2] = B[R3 + B1 + 2];
-    Bp[R3 + B0 + 3] = B[R3 + B1 + 3];
-    Bp[R3 + B0 + 4] = B[R3 + B1 + 4];
-    Bp[R3 + B0 + 5] = B[R3 + B1 + 5];
-    Bp[R3 + B0 + 6] = B[R3 + B1 + 6];
-    Bp[R3 + B0 + 7] = B[R3 + B1 + 7];
-    Bp[R3 + B1 + 0] = B[R3 + B2 + 0];
-    Bp[R3 + B1 + 1] = B[R3 + B2 + 1];
-    Bp[R3 + B1 + 2] = B[R3 + B2 + 2];
-    Bp[R3 + B1 + 3] = B[R3 + B2 + 3];
-    Bp[R3 + B1 + 4] = B[R3 + B2 + 4];
-    Bp[R3 + B1 + 5] = B[R3 + B2 + 5];
-    Bp[R3 + B1 + 6] = B[R3 + B2 + 6];
-    Bp[R3 + B1 + 7] = B[R3 + B2 + 7];
-    Bp[R3 + B2 + 0] = B[R3 + B3 + 0];
-    Bp[R3 + B2 + 1] = B[R3 + B3 + 1];
-    Bp[R3 + B2 + 2] = B[R3 + B3 + 2];
-    Bp[R3 + B2 + 3] = B[R3 + B3 + 3];
-    Bp[R3 + B2 + 4] = B[R3 + B3 + 4];
-    Bp[R3 + B2 + 5] = B[R3 + B3 + 5];
-    Bp[R3 + B2 + 6] = B[R3 + B3 + 6];
-    Bp[R3 + B2 + 7] = B[R3 + B3 + 7];
-
-    memmove(B,Bp,sizeof(Bp));
+        B += 8;
+    }
+    memmove(B - 8 * 4,Bp_space,sizeof(Bp_space));
 }
+
 
 #define A0  0
 #define A1  8
@@ -730,9 +571,14 @@ void bs_shiftmix(word_t * B)
     uint8_t offsetr2 = 64;
     uint8_t offsetr3 = 96;
 
+        Br0 = B + offsetr0;
+        Br1 = B + offsetr1;
+        Br2 = B + offsetr2;
+        Br3 = B + offsetr3;
+
 
     int i;
-    for (i = 0; i < BLOCK_SIZE; i += BLOCK_SIZE/4)
+    for (i = 0; i < 4; i++)
     {
         // B0
         //            2*A0        2*A1              A1           A2           A3
@@ -805,7 +651,7 @@ void bs_mixcolumns(word_t * B)
     // https://en.wikipedia.org/wiki/Rijndael_mix_columns
     
     int i = 0;
-    for (; i < BLOCK_SIZE / 4; i += BLOCK_SIZE / 16)
+    for (; i < 4; i++)
     {
     //  of = A0 ^ A1;
     //  A0 = A0 ^ (0x1b & ((signed char)of>>7));
@@ -932,6 +778,7 @@ void bs_mixcolumns_rev(word_t * B)
 {
     // to understand this, see
     // https://en.wikipedia.org/wiki/Rijndael_mix_columns
+    // TODO combine with shiftrows for performance on decryption
     word_t Bp_space[BLOCK_SIZE];
     word_t * Bp = Bp_space;
 

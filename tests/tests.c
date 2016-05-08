@@ -1,6 +1,13 @@
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include "../utils.h"
+
+#ifdef TEST_FOOTPRINT
+#define printf(fmt, ...) (0)
+#define fprintf(f,fmt, ...) (0)
+#else
+#include <stdio.h>
+#endif
 
 void aes_ecb_test()
 {
@@ -32,6 +39,10 @@ void aes_ecb_test()
     {
         fprintf(stderr,"error: ciphertext is not the same as the test vector\n");
         exit(1);
+    }
+    else
+    {
+        printf("ECB passes test vector\n\n");
     }
 }
 
@@ -84,6 +95,10 @@ void aes_ctr_test()
     {
         fprintf(stderr,"error: ciphertext is not the same as the test vector\n");
         exit(1);
+    }
+    else
+    {
+        printf("CTR passes test vector\n\n");
     }
 
 }
