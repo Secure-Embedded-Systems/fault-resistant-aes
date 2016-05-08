@@ -394,7 +394,7 @@ void bs_transpose_rev(word_t * blocks)
         for(j=0; j < WORD_SIZE; j++)
         {
             word_t bit = (w & (ONE << j)) ? (ONE << (k % WORD_SIZE)) : 0;
-            transpose[j * 2 + (k >= WORD_SIZE)] |= bit;
+            transpose[j * WORDS_PER_BLOCK + (k/WORD_SIZE )] |= bit;
         }
     }
     memmove(blocks,transpose,sizeof(transpose));
@@ -930,7 +930,6 @@ void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
     bs_apply_sbox(state);
     bs_shiftrows(state);
     bs_addroundkey(state,rk[10]);
-
     bs_transpose_rev(state);
 }
 
