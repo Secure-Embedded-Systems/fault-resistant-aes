@@ -421,6 +421,7 @@ void bs_transpose_rev(word_t * blocks)
 void bs_shiftrows(word_t * B)
 {
     word_t Bp[BLOCK_SIZE];
+
     // Row 0
     Bp[R0 + B0 + 0] = B[R0 + B0 + 0];
     Bp[R0 + B0 + 1] = B[R0 + B0 + 1];
@@ -708,21 +709,6 @@ void bs_shiftrows_rev(word_t * B)
     memmove(B,Bp,sizeof(Bp));
 }
 
-
-static uint8_t transbyte(word_t * B)
-{
-    uint8_t b = (B[0] << 0 )
-                |(B[1] << 1 )
-                |(B[2] << 2 )
-                |(B[3] << 3 )
-                |(B[4] << 4 )
-                |(B[5] << 5 )
-                |(B[6] << 6 )
-                |(B[7] << 7 );
-    return b;
-}
-
-
 #define A0  0
 #define A1  8
 #define A2  16
@@ -734,228 +720,79 @@ void bs_shiftmix(word_t * B)
     word_t Bp_space[BLOCK_SIZE];
     word_t * Bp = Bp_space;
 
-    // this side    | shift rows
-    // ----------------------
-    // A0+B0            R0+B0
-    // A0+B1            R0+B1
-    // A0+B2            R0+B2
-    // A0+B3            R0+B3
-    //
-    // A1+B0            R1+B1
-    // A1+B1            R1+B2
-    // A1+B2            R1+B3
-    // A1+B3            R1+B0
-    //
-    // A2+B0            R2+B2
-    // A2+B1            R2+B3
-    // A2+B2            R2+B0
-    // A2+B3            R2+B1
-    //
-    // A3+B0            R3+B3
-    // A3+B1            R3+B0
-    // A3+B2            R3+B1
-    // A3+B3            R3+B2
+    word_t * Br0 = B + 0;
+    word_t * Br1 = B + 32;
+    word_t * Br2 = B + 64;
+    word_t * Br3 = B + 96;
 
-    // B0
-    //            2*A0        2*A1          A1           A2           A3
-    word_t of = B[R0+B0+7] ^ B[R1+B1+7];
-    Bp[A0+0] =                           B[R1+B1+0] ^ B[R2+B2+0] ^ B[R3+B3+0] ^ of;
-    Bp[A0+1] = B[R0+B0+0] ^ B[R1+B1+0] ^ B[R1+B1+1] ^ B[R2+B2+1] ^ B[R3+B3+1] ^ of;
-    Bp[A0+2] = B[R0+B0+1] ^ B[R1+B1+1] ^ B[R1+B1+2] ^ B[R2+B2+2] ^ B[R3+B3+2];
-    Bp[A0+3] = B[R0+B0+2] ^ B[R1+B1+2] ^ B[R1+B1+3] ^ B[R2+B2+3] ^ B[R3+B3+3] ^ of;
-    Bp[A0+4] = B[R0+B0+3] ^ B[R1+B1+3] ^ B[R1+B1+4] ^ B[R2+B2+4] ^ B[R3+B3+4] ^ of;
-    Bp[A0+5] = B[R0+B0+4] ^ B[R1+B1+4] ^ B[R1+B1+5] ^ B[R2+B2+5] ^ B[R3+B3+5];
-    Bp[A0+6] = B[R0+B0+5] ^ B[R1+B1+5] ^ B[R1+B1+6] ^ B[R2+B2+6] ^ B[R3+B3+6];
-    Bp[A0+7] = B[R0+B0+6] ^ B[R1+B1+6] ^ B[R1+B1+7] ^ B[R2+B2+7] ^ B[R3+B3+7];
-
-    //            A0            2*A1       2*A2           A2          A3
-    of = B[R1+B1+7] ^ B[R2+B2+7];
-    Bp[A1+0] = B[R0+B0+0]                           ^ B[R2+B2+0] ^ B[R3+B3+0] ^ of;
-    Bp[A1+1] = B[R0+B0+1] ^ B[R1+B1+0] ^ B[R2+B2+0] ^ B[R2+B2+1] ^ B[R3+B3+1] ^ of;
-    Bp[A1+2] = B[R0+B0+2] ^ B[R1+B1+1] ^ B[R2+B2+1] ^ B[R2+B2+2] ^ B[R3+B3+2];
-    Bp[A1+3] = B[R0+B0+3] ^ B[R1+B1+2] ^ B[R2+B2+2] ^ B[R2+B2+3] ^ B[R3+B3+3] ^ of;
-    Bp[A1+4] = B[R0+B0+4] ^ B[R1+B1+3] ^ B[R2+B2+3] ^ B[R2+B2+4] ^ B[R3+B3+4] ^ of;
-    Bp[A1+5] = B[R0+B0+5] ^ B[R1+B1+4] ^ B[R2+B2+4] ^ B[R2+B2+5] ^ B[R3+B3+5];
-    Bp[A1+6] = B[R0+B0+6] ^ B[R1+B1+5] ^ B[R2+B2+5] ^ B[R2+B2+6] ^ B[R3+B3+6];
-    Bp[A1+7] = B[R0+B0+7] ^ B[R1+B1+6] ^ B[R2+B2+6] ^ B[R2+B2+7] ^ B[R3+B3+7];
-
-    //            A0             A1         2*A2         2*A3         A3
-    of = B[R2+B2+7] ^ B[R3+B3+7];
-    Bp[A2+0] = B[R0+B0+0] ^ B[R1+B1+0]                           ^ B[R3+B3+0] ^ of;
-    Bp[A2+1] = B[R0+B0+1] ^ B[R1+B1+1] ^ B[R2+B2+0] ^ B[R3+B3+0] ^ B[R3+B3+1] ^ of;
-    Bp[A2+2] = B[R0+B0+2] ^ B[R1+B1+2] ^ B[R2+B2+1] ^ B[R3+B3+1] ^ B[R3+B3+2];
-    Bp[A2+3] = B[R0+B0+3] ^ B[R1+B1+3] ^ B[R2+B2+2] ^ B[R3+B3+2] ^ B[R3+B3+3] ^ of;
-    Bp[A2+4] = B[R0+B0+4] ^ B[R1+B1+4] ^ B[R2+B2+3] ^ B[R3+B3+3] ^ B[R3+B3+4] ^ of;
-    Bp[A2+5] = B[R0+B0+5] ^ B[R1+B1+5] ^ B[R2+B2+4] ^ B[R3+B3+4] ^ B[R3+B3+5];
-    Bp[A2+6] = B[R0+B0+6] ^ B[R1+B1+6] ^ B[R2+B2+5] ^ B[R3+B3+5] ^ B[R3+B3+6];
-    Bp[A2+7] = B[R0+B0+7] ^ B[R1+B1+7] ^ B[R2+B2+6] ^ B[R3+B3+6] ^ B[R3+B3+7];
-
-    //             A0          2*A0          A1          A2         2*A3
-    of = B[R0+B0+7] ^ B[R3+B3+7];
-    Bp[A3+0] = B[R0+B0+0] ^              B[R1+B1+0] ^ B[R2+B2+0]              ^ of;
-    Bp[A3+1] = B[R0+B0+1] ^ B[R0+B0+0] ^ B[R1+B1+1] ^ B[R2+B2+1] ^ B[R3+B3+0] ^ of;
-    Bp[A3+2] = B[R0+B0+2] ^ B[R0+B0+1] ^ B[R1+B1+2] ^ B[R2+B2+2] ^ B[R3+B3+1];
-    Bp[A3+3] = B[R0+B0+3] ^ B[R0+B0+2] ^ B[R1+B1+3] ^ B[R2+B2+3] ^ B[R3+B3+2] ^ of;
-    Bp[A3+4] = B[R0+B0+4] ^ B[R0+B0+3] ^ B[R1+B1+4] ^ B[R2+B2+4] ^ B[R3+B3+3] ^ of;
-    Bp[A3+5] = B[R0+B0+5] ^ B[R0+B0+4] ^ B[R1+B1+5] ^ B[R2+B2+5] ^ B[R3+B3+4];
-    Bp[A3+6] = B[R0+B0+6] ^ B[R0+B0+5] ^ B[R1+B1+6] ^ B[R2+B2+6] ^ B[R3+B3+5];
-    Bp[A3+7] = B[R0+B0+7] ^ B[R0+B0+6] ^ B[R1+B1+7] ^ B[R2+B2+7] ^ B[R3+B3+6];
-
-    Bp += BLOCK_SIZE/4;
-    /*B  += BLOCK_SIZE/4;*/
+    uint8_t offsetr0 = 0;
+    uint8_t offsetr1 = 32;
+    uint8_t offsetr2 = 64;
+    uint8_t offsetr3 = 96;
 
 
-    // B1
-    //            2*A0        2*A1          A1           A2           A3
-    of = B[R0+B1+7] ^ B[R1+B2+7];
-    Bp[A0+0] =                           B[R1+B2+0] ^ B[R2+B3+0] ^ B[R3+B0+0] ^ of;
-    Bp[A0+1] = B[R0+B1+0] ^ B[R1+B2+0] ^ B[R1+B2+1] ^ B[R2+B3+1] ^ B[R3+B0+1] ^ of;
-    Bp[A0+2] = B[R0+B1+1] ^ B[R1+B2+1] ^ B[R1+B2+2] ^ B[R2+B3+2] ^ B[R3+B0+2];
-    Bp[A0+3] = B[R0+B1+2] ^ B[R1+B2+2] ^ B[R1+B2+3] ^ B[R2+B3+3] ^ B[R3+B0+3] ^ of;
-    Bp[A0+4] = B[R0+B1+3] ^ B[R1+B2+3] ^ B[R1+B2+4] ^ B[R2+B3+4] ^ B[R3+B0+4] ^ of;
-    Bp[A0+5] = B[R0+B1+4] ^ B[R1+B2+4] ^ B[R1+B2+5] ^ B[R2+B3+5] ^ B[R3+B0+5];
-    Bp[A0+6] = B[R0+B1+5] ^ B[R1+B2+5] ^ B[R1+B2+6] ^ B[R2+B3+6] ^ B[R3+B0+6];
-    Bp[A0+7] = B[R0+B1+6] ^ B[R1+B2+6] ^ B[R1+B2+7] ^ B[R2+B3+7] ^ B[R3+B0+7];
+    int i;
+    for (i = 0; i < BLOCK_SIZE; i += BLOCK_SIZE/4)
+    {
+        // B0
+        //            2*A0        2*A1              A1           A2           A3
+        word_t of =Br0[R0+7]^ Br1[R1+7];
+        Bp[A0+0] =                         Br1[R1+0] ^ Br2[R2+0] ^ Br3[R3+0] ^ of;
+        Bp[A0+1] = Br0[R0+0] ^ Br1[R1+0] ^ Br1[R1+1] ^ Br2[R2+1] ^ Br3[R3+1] ^ of;
+        Bp[A0+2] = Br0[R0+1] ^ Br1[R1+1] ^ Br1[R1+2] ^ Br2[R2+2] ^ Br3[R3+2];
+        Bp[A0+3] = Br0[R0+2] ^ Br1[R1+2] ^ Br1[R1+3] ^ Br2[R2+3] ^ Br3[R3+3] ^ of;
+        Bp[A0+4] = Br0[R0+3] ^ Br1[R1+3] ^ Br1[R1+4] ^ Br2[R2+4] ^ Br3[R3+4] ^ of;
+        Bp[A0+5] = Br0[R0+4] ^ Br1[R1+4] ^ Br1[R1+5] ^ Br2[R2+5] ^ Br3[R3+5];
+        Bp[A0+6] = Br0[R0+5] ^ Br1[R1+5] ^ Br1[R1+6] ^ Br2[R2+6] ^ Br3[R3+6];
+        Bp[A0+7] = Br0[R0+6] ^ Br1[R1+6] ^ Br1[R1+7] ^ Br2[R2+7] ^ Br3[R3+7];
 
-    //            A0            2*A1       2*A2           A2          A3
-    of = B[R1+B2+7] ^ B[R2+B3+7];
-    Bp[A1+0] = B[R0+B1+0]                           ^ B[R2+B3+0] ^ B[R3+B0+0] ^ of;
-    Bp[A1+1] = B[R0+B1+1] ^ B[R1+B2+0] ^ B[R2+B3+0] ^ B[R2+B3+1] ^ B[R3+B0+1] ^ of;
-    Bp[A1+2] = B[R0+B1+2] ^ B[R1+B2+1] ^ B[R2+B3+1] ^ B[R2+B3+2] ^ B[R3+B0+2];
-    Bp[A1+3] = B[R0+B1+3] ^ B[R1+B2+2] ^ B[R2+B3+2] ^ B[R2+B3+3] ^ B[R3+B0+3] ^ of;
-    Bp[A1+4] = B[R0+B1+4] ^ B[R1+B2+3] ^ B[R2+B3+3] ^ B[R2+B3+4] ^ B[R3+B0+4] ^ of;
-    Bp[A1+5] = B[R0+B1+5] ^ B[R1+B2+4] ^ B[R2+B3+4] ^ B[R2+B3+5] ^ B[R3+B0+5];
-    Bp[A1+6] = B[R0+B1+6] ^ B[R1+B2+5] ^ B[R2+B3+5] ^ B[R2+B3+6] ^ B[R3+B0+6];
-    Bp[A1+7] = B[R0+B1+7] ^ B[R1+B2+6] ^ B[R2+B3+6] ^ B[R2+B3+7] ^ B[R3+B0+7];
+        //            A0            2*A1        2*A2        A2       A3
+        of = Br1[R1+7] ^ Br2[R2+7];
+        Bp[A1+0] = Br0[R0+0]                         ^ Br2[R2+0] ^ Br3[R3+0] ^ of;
+        Bp[A1+1] = Br0[R0+1] ^ Br1[R1+0] ^ Br2[R2+0] ^ Br2[R2+1] ^ Br3[R3+1] ^ of;
+        Bp[A1+2] = Br0[R0+2] ^ Br1[R1+1] ^ Br2[R2+1] ^ Br2[R2+2] ^ Br3[R3+2];
+        Bp[A1+3] = Br0[R0+3] ^ Br1[R1+2] ^ Br2[R2+2] ^ Br2[R2+3] ^ Br3[R3+3] ^ of;
+        Bp[A1+4] = Br0[R0+4] ^ Br1[R1+3] ^ Br2[R2+3] ^ Br2[R2+4] ^ Br3[R3+4] ^ of;
+        Bp[A1+5] = Br0[R0+5] ^ Br1[R1+4] ^ Br2[R2+4] ^ Br2[R2+5] ^ Br3[R3+5];
+        Bp[A1+6] = Br0[R0+6] ^ Br1[R1+5] ^ Br2[R2+5] ^ Br2[R2+6] ^ Br3[R3+6];
+        Bp[A1+7] = Br0[R0+7] ^ Br1[R1+6] ^ Br2[R2+6] ^ Br2[R2+7] ^ Br3[R3+7];
 
-    //            A0             A1         2*A2         2*A3         A3
-    of = B[R2+B3+7] ^ B[R3+B0+7];
-    Bp[A2+0] = B[R0+B1+0] ^ B[R1+B2+0]                           ^ B[R3+B0+0] ^ of;
-    Bp[A2+1] = B[R0+B1+1] ^ B[R1+B2+1] ^ B[R2+B3+0] ^ B[R3+B0+0] ^ B[R3+B0+1] ^ of;
-    Bp[A2+2] = B[R0+B1+2] ^ B[R1+B2+2] ^ B[R2+B3+1] ^ B[R3+B0+1] ^ B[R3+B0+2];
-    Bp[A2+3] = B[R0+B1+3] ^ B[R1+B2+3] ^ B[R2+B3+2] ^ B[R3+B0+2] ^ B[R3+B0+3] ^ of;
-    Bp[A2+4] = B[R0+B1+4] ^ B[R1+B2+4] ^ B[R2+B3+3] ^ B[R3+B0+3] ^ B[R3+B0+4] ^ of;
-    Bp[A2+5] = B[R0+B1+5] ^ B[R1+B2+5] ^ B[R2+B3+4] ^ B[R3+B0+4] ^ B[R3+B0+5];
-    Bp[A2+6] = B[R0+B1+6] ^ B[R1+B2+6] ^ B[R2+B3+5] ^ B[R3+B0+5] ^ B[R3+B0+6];
-    Bp[A2+7] = B[R0+B1+7] ^ B[R1+B2+7] ^ B[R2+B3+6] ^ B[R3+B0+6] ^ B[R3+B0+7];
+        //            A0             A1      2*A2        2*A3         A3
+        of = Br2[R2+7] ^ Br3[R3+7];
+        Bp[A2+0] = Br0[R0+0] ^ Br1[R1+0]                         ^ Br3[R3+0] ^ of;
+        Bp[A2+1] = Br0[R0+1] ^ Br1[R1+1] ^ Br2[R2+0] ^ Br3[R3+0] ^ Br3[R3+1] ^ of;
+        Bp[A2+2] = Br0[R0+2] ^ Br1[R1+2] ^ Br2[R2+1] ^ Br3[R3+1] ^ Br3[R3+2];
+        Bp[A2+3] = Br0[R0+3] ^ Br1[R1+3] ^ Br2[R2+2] ^ Br3[R3+2] ^ Br3[R3+3] ^ of;
+        Bp[A2+4] = Br0[R0+4] ^ Br1[R1+4] ^ Br2[R2+3] ^ Br3[R3+3] ^ Br3[R3+4] ^ of;
+        Bp[A2+5] = Br0[R0+5] ^ Br1[R1+5] ^ Br2[R2+4] ^ Br3[R3+4] ^ Br3[R3+5];
+        Bp[A2+6] = Br0[R0+6] ^ Br1[R1+6] ^ Br2[R2+5] ^ Br3[R3+5] ^ Br3[R3+6];
+        Bp[A2+7] = Br0[R0+7] ^ Br1[R1+7] ^ Br2[R2+6] ^ Br3[R3+6] ^ Br3[R3+7];
 
-    //             A0          2*A0          A1          A2         2*A3
-    of = B[R0+B1+7] ^ B[R3+B0+7];
-    Bp[A3+0] = B[R0+B1+0] ^              B[R1+B2+0] ^ B[R2+B3+0]              ^ of;
-    Bp[A3+1] = B[R0+B1+1] ^ B[R0+B1+0] ^ B[R1+B2+1] ^ B[R2+B3+1] ^ B[R3+B0+0] ^ of;
-    Bp[A3+2] = B[R0+B1+2] ^ B[R0+B1+1] ^ B[R1+B2+2] ^ B[R2+B3+2] ^ B[R3+B0+1];
-    Bp[A3+3] = B[R0+B1+3] ^ B[R0+B1+2] ^ B[R1+B2+3] ^ B[R2+B3+3] ^ B[R3+B0+2] ^ of;
-    Bp[A3+4] = B[R0+B1+4] ^ B[R0+B1+3] ^ B[R1+B2+4] ^ B[R2+B3+4] ^ B[R3+B0+3] ^ of;
-    Bp[A3+5] = B[R0+B1+5] ^ B[R0+B1+4] ^ B[R1+B2+5] ^ B[R2+B3+5] ^ B[R3+B0+4];
-    Bp[A3+6] = B[R0+B1+6] ^ B[R0+B1+5] ^ B[R1+B2+6] ^ B[R2+B3+6] ^ B[R3+B0+5];
-    Bp[A3+7] = B[R0+B1+7] ^ B[R0+B1+6] ^ B[R1+B2+7] ^ B[R2+B3+7] ^ B[R3+B0+6];
+        //             A0          2*A0           A1       A2      2*A3
+        of = Br0[R0+7] ^ Br3[R3+7];
+        Bp[A3+0] = Br0[R0+0] ^             Br1[R1+0] ^ Br2[R2+0]             ^ of;
+        Bp[A3+1] = Br0[R0+1] ^ Br0[R0+0] ^ Br1[R1+1] ^ Br2[R2+1] ^ Br3[R3+0] ^ of;
+        Bp[A3+2] = Br0[R0+2] ^ Br0[R0+1] ^ Br1[R1+2] ^ Br2[R2+2] ^ Br3[R3+1];
+        Bp[A3+3] = Br0[R0+3] ^ Br0[R0+2] ^ Br1[R1+3] ^ Br2[R2+3] ^ Br3[R3+2] ^ of;
+        Bp[A3+4] = Br0[R0+4] ^ Br0[R0+3] ^ Br1[R1+4] ^ Br2[R2+4] ^ Br3[R3+3] ^ of;
+        Bp[A3+5] = Br0[R0+5] ^ Br0[R0+4] ^ Br1[R1+5] ^ Br2[R2+5] ^ Br3[R3+4];
+        Bp[A3+6] = Br0[R0+6] ^ Br0[R0+5] ^ Br1[R1+6] ^ Br2[R2+6] ^ Br3[R3+5];
+        Bp[A3+7] = Br0[R0+7] ^ Br0[R0+6] ^ Br1[R1+7] ^ Br2[R2+7] ^ Br3[R3+6];
 
-    Bp += BLOCK_SIZE/4;
-    /*B  += BLOCK_SIZE/4;*/
+        Bp += BLOCK_SIZE/4;
 
+        offsetr0 = (offsetr0 + BLOCK_SIZE/4) & 0x7f;
+        offsetr1 = (offsetr1 + BLOCK_SIZE/4) & 0x7f;
+        offsetr2 = (offsetr2 + BLOCK_SIZE/4) & 0x7f;
+        offsetr3 = (offsetr3 + BLOCK_SIZE/4) & 0x7f;
 
+        Br0 = B + offsetr0;
+        Br1 = B + offsetr1;
+        Br2 = B + offsetr2;
+        Br3 = B + offsetr3;
+    }
 
-    // B2
-    //            2*A0        2*A1          A1           A2           A3
-    of = B[R0+B2+7] ^ B[R1+B3+7];
-    Bp[A0+0] =                           B[R1+B3+0] ^ B[R2+B0+0] ^ B[R3+B1+0] ^ of;
-    Bp[A0+1] = B[R0+B2+0] ^ B[R1+B3+0] ^ B[R1+B3+1] ^ B[R2+B0+1] ^ B[R3+B1+1] ^ of;
-    Bp[A0+2] = B[R0+B2+1] ^ B[R1+B3+1] ^ B[R1+B3+2] ^ B[R2+B0+2] ^ B[R3+B1+2];
-    Bp[A0+3] = B[R0+B2+2] ^ B[R1+B3+2] ^ B[R1+B3+3] ^ B[R2+B0+3] ^ B[R3+B1+3] ^ of;
-    Bp[A0+4] = B[R0+B2+3] ^ B[R1+B3+3] ^ B[R1+B3+4] ^ B[R2+B0+4] ^ B[R3+B1+4] ^ of;
-    Bp[A0+5] = B[R0+B2+4] ^ B[R1+B3+4] ^ B[R1+B3+5] ^ B[R2+B0+5] ^ B[R3+B1+5];
-    Bp[A0+6] = B[R0+B2+5] ^ B[R1+B3+5] ^ B[R1+B3+6] ^ B[R2+B0+6] ^ B[R3+B1+6];
-    Bp[A0+7] = B[R0+B2+6] ^ B[R1+B3+6] ^ B[R1+B3+7] ^ B[R2+B0+7] ^ B[R3+B1+7];
-
-    //            A0            2*A1       2*A2           A2          A3
-    of = B[R1+B3+7] ^ B[R2+B0+7];
-    Bp[A1+0] = B[R0+B2+0]                           ^ B[R2+B0+0] ^ B[R3+B1+0] ^ of;
-    Bp[A1+1] = B[R0+B2+1] ^ B[R1+B3+0] ^ B[R2+B0+0] ^ B[R2+B0+1] ^ B[R3+B1+1] ^ of;
-    Bp[A1+2] = B[R0+B2+2] ^ B[R1+B3+1] ^ B[R2+B0+1] ^ B[R2+B0+2] ^ B[R3+B1+2];
-    Bp[A1+3] = B[R0+B2+3] ^ B[R1+B3+2] ^ B[R2+B0+2] ^ B[R2+B0+3] ^ B[R3+B1+3] ^ of;
-    Bp[A1+4] = B[R0+B2+4] ^ B[R1+B3+3] ^ B[R2+B0+3] ^ B[R2+B0+4] ^ B[R3+B1+4] ^ of;
-    Bp[A1+5] = B[R0+B2+5] ^ B[R1+B3+4] ^ B[R2+B0+4] ^ B[R2+B0+5] ^ B[R3+B1+5];
-    Bp[A1+6] = B[R0+B2+6] ^ B[R1+B3+5] ^ B[R2+B0+5] ^ B[R2+B0+6] ^ B[R3+B1+6];
-    Bp[A1+7] = B[R0+B2+7] ^ B[R1+B3+6] ^ B[R2+B0+6] ^ B[R2+B0+7] ^ B[R3+B1+7];
-
-    //            A0             A1         2*A2         2*A3         A3
-    of = B[R2+B0+7] ^ B[R3+B1+7];
-    Bp[A2+0] = B[R0+B2+0] ^ B[R1+B3+0]                           ^ B[R3+B1+0] ^ of;
-    Bp[A2+1] = B[R0+B2+1] ^ B[R1+B3+1] ^ B[R2+B0+0] ^ B[R3+B1+0] ^ B[R3+B1+1] ^ of;
-    Bp[A2+2] = B[R0+B2+2] ^ B[R1+B3+2] ^ B[R2+B0+1] ^ B[R3+B1+1] ^ B[R3+B1+2];
-    Bp[A2+3] = B[R0+B2+3] ^ B[R1+B3+3] ^ B[R2+B0+2] ^ B[R3+B1+2] ^ B[R3+B1+3] ^ of;
-    Bp[A2+4] = B[R0+B2+4] ^ B[R1+B3+4] ^ B[R2+B0+3] ^ B[R3+B1+3] ^ B[R3+B1+4] ^ of;
-    Bp[A2+5] = B[R0+B2+5] ^ B[R1+B3+5] ^ B[R2+B0+4] ^ B[R3+B1+4] ^ B[R3+B1+5];
-    Bp[A2+6] = B[R0+B2+6] ^ B[R1+B3+6] ^ B[R2+B0+5] ^ B[R3+B1+5] ^ B[R3+B1+6];
-    Bp[A2+7] = B[R0+B2+7] ^ B[R1+B3+7] ^ B[R2+B0+6] ^ B[R3+B1+6] ^ B[R3+B1+7];
-
-    //             A0          2*A0          A1          A2         2*A3
-    of = B[R0+B2+7] ^ B[R3+B1+7];
-    Bp[A3+0] = B[R0+B2+0] ^              B[R1+B3+0] ^ B[R2+B0+0]              ^ of;
-    Bp[A3+1] = B[R0+B2+1] ^ B[R0+B2+0] ^ B[R1+B3+1] ^ B[R2+B0+1] ^ B[R3+B1+0] ^ of;
-    Bp[A3+2] = B[R0+B2+2] ^ B[R0+B2+1] ^ B[R1+B3+2] ^ B[R2+B0+2] ^ B[R3+B1+1];
-    Bp[A3+3] = B[R0+B2+3] ^ B[R0+B2+2] ^ B[R1+B3+3] ^ B[R2+B0+3] ^ B[R3+B1+2] ^ of;
-    Bp[A3+4] = B[R0+B2+4] ^ B[R0+B2+3] ^ B[R1+B3+4] ^ B[R2+B0+4] ^ B[R3+B1+3] ^ of;
-    Bp[A3+5] = B[R0+B2+5] ^ B[R0+B2+4] ^ B[R1+B3+5] ^ B[R2+B0+5] ^ B[R3+B1+4];
-    Bp[A3+6] = B[R0+B2+6] ^ B[R0+B2+5] ^ B[R1+B3+6] ^ B[R2+B0+6] ^ B[R3+B1+5];
-    Bp[A3+7] = B[R0+B2+7] ^ B[R0+B2+6] ^ B[R1+B3+7] ^ B[R2+B0+7] ^ B[R3+B1+6];
-
-    Bp += BLOCK_SIZE/4;
-    /*B  += BLOCK_SIZE/4;*/
-
-
-
-    // B3
-    //            2*A0        2*A1          A1           A2           A3
-    of = B[R0+B3+7] ^ B[R1+B0+7];
-    Bp[A0+0] =                           B[R1+B0+0] ^ B[R2+B1+0] ^ B[R3+B2+0] ^ of;
-    Bp[A0+1] = B[R0+B3+0] ^ B[R1+B0+0] ^ B[R1+B0+1] ^ B[R2+B1+1] ^ B[R3+B2+1] ^ of;
-    Bp[A0+2] = B[R0+B3+1] ^ B[R1+B0+1] ^ B[R1+B0+2] ^ B[R2+B1+2] ^ B[R3+B2+2];
-    Bp[A0+3] = B[R0+B3+2] ^ B[R1+B0+2] ^ B[R1+B0+3] ^ B[R2+B1+3] ^ B[R3+B2+3] ^ of;
-    Bp[A0+4] = B[R0+B3+3] ^ B[R1+B0+3] ^ B[R1+B0+4] ^ B[R2+B1+4] ^ B[R3+B2+4] ^ of;
-    Bp[A0+5] = B[R0+B3+4] ^ B[R1+B0+4] ^ B[R1+B0+5] ^ B[R2+B1+5] ^ B[R3+B2+5];
-    Bp[A0+6] = B[R0+B3+5] ^ B[R1+B0+5] ^ B[R1+B0+6] ^ B[R2+B1+6] ^ B[R3+B2+6];
-    Bp[A0+7] = B[R0+B3+6] ^ B[R1+B0+6] ^ B[R1+B0+7] ^ B[R2+B1+7] ^ B[R3+B2+7];
-
-    //            A0            2*A1       2*A2           A2          A3
-    of = B[R1+B0+7] ^ B[R2+B1+7];
-    Bp[A1+0] = B[R0+B3+0]                           ^ B[R2+B1+0] ^ B[R3+B2+0] ^ of;
-    Bp[A1+1] = B[R0+B3+1] ^ B[R1+B0+0] ^ B[R2+B1+0] ^ B[R2+B1+1] ^ B[R3+B2+1] ^ of;
-    Bp[A1+2] = B[R0+B3+2] ^ B[R1+B0+1] ^ B[R2+B1+1] ^ B[R2+B1+2] ^ B[R3+B2+2];
-    Bp[A1+3] = B[R0+B3+3] ^ B[R1+B0+2] ^ B[R2+B1+2] ^ B[R2+B1+3] ^ B[R3+B2+3] ^ of;
-    Bp[A1+4] = B[R0+B3+4] ^ B[R1+B0+3] ^ B[R2+B1+3] ^ B[R2+B1+4] ^ B[R3+B2+4] ^ of;
-    Bp[A1+5] = B[R0+B3+5] ^ B[R1+B0+4] ^ B[R2+B1+4] ^ B[R2+B1+5] ^ B[R3+B2+5];
-    Bp[A1+6] = B[R0+B3+6] ^ B[R1+B0+5] ^ B[R2+B1+5] ^ B[R2+B1+6] ^ B[R3+B2+6];
-    Bp[A1+7] = B[R0+B3+7] ^ B[R1+B0+6] ^ B[R2+B1+6] ^ B[R2+B1+7] ^ B[R3+B2+7];
-
-    //            A0             A1         2*A2         2*A3         A3
-    of = B[R2+B1+7] ^ B[R3+B2+7];
-    Bp[A2+0] = B[R0+B3+0] ^ B[R1+B0+0]                           ^ B[R3+B2+0] ^ of;
-    Bp[A2+1] = B[R0+B3+1] ^ B[R1+B0+1] ^ B[R2+B1+0] ^ B[R3+B2+0] ^ B[R3+B2+1] ^ of;
-    Bp[A2+2] = B[R0+B3+2] ^ B[R1+B0+2] ^ B[R2+B1+1] ^ B[R3+B2+1] ^ B[R3+B2+2];
-    Bp[A2+3] = B[R0+B3+3] ^ B[R1+B0+3] ^ B[R2+B1+2] ^ B[R3+B2+2] ^ B[R3+B2+3] ^ of;
-    Bp[A2+4] = B[R0+B3+4] ^ B[R1+B0+4] ^ B[R2+B1+3] ^ B[R3+B2+3] ^ B[R3+B2+4] ^ of;
-    Bp[A2+5] = B[R0+B3+5] ^ B[R1+B0+5] ^ B[R2+B1+4] ^ B[R3+B2+4] ^ B[R3+B2+5];
-    Bp[A2+6] = B[R0+B3+6] ^ B[R1+B0+6] ^ B[R2+B1+5] ^ B[R3+B2+5] ^ B[R3+B2+6];
-    Bp[A2+7] = B[R0+B3+7] ^ B[R1+B0+7] ^ B[R2+B1+6] ^ B[R3+B2+6] ^ B[R3+B2+7];
-
-    //             A0          2*A0          A1          A2         2*A3
-    of = B[R0+B3+7] ^ B[R3+B2+7];
-    Bp[A3+0] = B[R0+B3+0] ^              B[R1+B0+0] ^ B[R2+B1+0]              ^ of;
-    Bp[A3+1] = B[R0+B3+1] ^ B[R0+B3+0] ^ B[R1+B0+1] ^ B[R2+B1+1] ^ B[R3+B2+0] ^ of;
-    Bp[A3+2] = B[R0+B3+2] ^ B[R0+B3+1] ^ B[R1+B0+2] ^ B[R2+B1+2] ^ B[R3+B2+1];
-    Bp[A3+3] = B[R0+B3+3] ^ B[R0+B3+2] ^ B[R1+B0+3] ^ B[R2+B1+3] ^ B[R3+B2+2] ^ of;
-    Bp[A3+4] = B[R0+B3+4] ^ B[R0+B3+3] ^ B[R1+B0+4] ^ B[R2+B1+4] ^ B[R3+B2+3] ^ of;
-    Bp[A3+5] = B[R0+B3+5] ^ B[R0+B3+4] ^ B[R1+B0+5] ^ B[R2+B1+5] ^ B[R3+B2+4];
-    Bp[A3+6] = B[R0+B3+6] ^ B[R0+B3+5] ^ B[R1+B0+6] ^ B[R2+B1+6] ^ B[R3+B2+5];
-    Bp[A3+7] = B[R0+B3+7] ^ B[R0+B3+6] ^ B[R1+B0+7] ^ B[R2+B1+7] ^ B[R3+B2+6];
-
-    Bp += BLOCK_SIZE/4;
-    /*B  += BLOCK_SIZE/4;*/
-
-
-
-    memmove(B,Bp - BLOCK_SIZE,sizeof(Bp_space));
+    memmove(B,Bp_space,sizeof(Bp_space));
 }
 
 
@@ -964,9 +801,8 @@ void bs_mixcolumns(word_t * B)
 {
     word_t Bp_space[BLOCK_SIZE];
     word_t * Bp = Bp_space;
-    // to understand this, you MUST understand
+    // to understand this, see
     // https://en.wikipedia.org/wiki/Rijndael_mix_columns
-    // first.
     
     int i = 0;
     for (; i < BLOCK_SIZE / 4; i += BLOCK_SIZE / 16)
@@ -1094,9 +930,8 @@ void bs_mixcolumns(word_t * B)
 
 void bs_mixcolumns_rev(word_t * B)
 {
-    // to understand this, you MUST understand
+    // to understand this, see
     // https://en.wikipedia.org/wiki/Rijndael_mix_columns
-    // first.
     word_t Bp_space[BLOCK_SIZE];
     word_t * Bp = Bp_space;
 
