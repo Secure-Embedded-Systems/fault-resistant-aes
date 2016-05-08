@@ -9,7 +9,7 @@
 #include <openssl/err.h>
 
 #include "app.h"
-#include "bs.h"
+#include "../bs.h"
 
 static void openssl_die()
 {
