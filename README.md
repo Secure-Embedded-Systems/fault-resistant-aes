@@ -52,7 +52,7 @@ Compile the test program by running:
 make test
 ```
 
-Change to the word length of your processor by editing the "WORD_SIZE" macro in bs.h.  Optimize for
+Change to the word length of your processor by editing the `WORD_SIZE` macro in bs.h.  Optimize for
 footprint by using `-O2` instead of `-O3` in the Makefile and also deleting the `-DUNROLL_TRANSPOSE` 
 flag.
 
