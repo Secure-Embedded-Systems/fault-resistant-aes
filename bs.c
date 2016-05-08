@@ -2,10 +2,12 @@
 #include <string.h>
 #include "bs.h"
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) ||\
+        defined(__amd64__) || defined(__amd32__)|| defined(__amd16__)
 #define bs2le(x) (x)
 #define bs2be(x) (x)
-#elif __BYTE_ORDER == __BIG_ENDIAN
+#elif (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) ||\
+            (defined(__sparc__))
 #define bs2le(x) __builtin_bswap_wordsize(x)
 #define bs2be(x) __builtin_bswap_wordsize(x)
 #else
