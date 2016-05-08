@@ -1,8 +1,5 @@
 
 #include <string.h>
-#include <endian.h>
-#include <stdio.h>
-#include <assert.h>
 #include "aes.h"
 #include "bs.h"
 
