@@ -2,7 +2,6 @@
 #define _BS_H_
 
 #include <stdint.h>
-#include <inttypes.h>
 
 #define BLOCK_SIZE          128
 #define KEY_SCHEDULE_SIZE   176
@@ -13,22 +12,22 @@
 #if (WORD_SIZE==64)
     typedef uint64_t    word_t;
     #define ONE         1ULL
-    #define WFMT        PRIx64
+    #define WFMT        "lx"
     #define WPAD        "016"
 #elif (WORD_SIZE==32)
     typedef uint32_t    word_t;
     #define ONE         1UL
-    #define WFMT        PRIx32
+    #define WFMT        "x"
     #define WPAD        "08"
 #elif (WORD_SIZE==16)
     typedef uint16_t    word_t;
     #define ONE         1
-    #define WFMT        PRIx16
+    #define WFMT        "hx"
     #define WPAD        "04"
 #elif (WORD_SIZE==8)
     typedef uint8_t     word_t;
     #define ONE         1
-    #define WFMT        PRIx8
+    #define WFMT        "hhx"
     #define WPAD        "02"
 #else
 #error "invalid word size"
