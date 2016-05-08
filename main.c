@@ -24,10 +24,13 @@ int main(int argc, char * argv[])
     aes_ecb_test();
 #endif
     aes_ctr_test();
-    return 0;
-#endif
+
+#else
 
     cli_app(argc,argv);
+
+#endif
+
 
 
     return 0;

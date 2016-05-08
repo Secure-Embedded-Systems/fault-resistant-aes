@@ -136,5 +136,8 @@ int cli_app(int argc, char * argv[])
         exit(2);
     }
 
+    free(ct);
+    free(pt);
+
     return 0;
 }
