@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "../utils.h"
+#include "../aes.h"
 
 #ifdef TEST_FOOTPRINT
 #define printf(fmt, ...) (0)
@@ -81,7 +82,7 @@ void aes_ctr_test()
     printf("cipher text: \n");
     dump_hex(output,AES_CTR_TESTS_BYTES);
     
-    aes_ctr_encrypt(input,output,AES_CTR_TESTS_BYTES,key_vector, iv_vector);
+    aes_ctr_decrypt(input,output,AES_CTR_TESTS_BYTES,key_vector, iv_vector);
 
     printf("plain text: \n");
     dump_hex(input,AES_CTR_TESTS_BYTES);

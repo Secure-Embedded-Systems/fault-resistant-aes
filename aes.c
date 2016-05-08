@@ -118,40 +118,5 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
 }
 
 
-void aes_ctr_decrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key, uint8_t * iv)
-{
-    word_t input_space[BLOCK_SIZE];
-    word_t rk[11][BLOCK_SIZE];
-    word_t ctr[BLOCK_SIZE];
-    uint8_t iv_copy[BLOCK_SIZE/8];
-    
-    memset(outputb,0,size);
-    memset(ctr,0,sizeof(ctr));
-    memmove(iv_copy,iv,BLOCK_SIZE/8);
-
-    word_t * state = (word_t *)outputb;
-    bs_expand_key(rk, key);
-
-    int i;
-    uint8_t j = 0;
-    for (i = 0; i < BLOCK_SIZE; i += WORDS_PER_BLOCK)
-    {
-        memmove(ctr + i, iv_copy, 16);
-        INC_CTR(iv_copy,1);
-    }
-
-
-    bs_cipher_rev(ctr, rk);
-
-    assert(size < BS_BLOCK_SIZE);
-
-    uint8_t * ctr_p = (uint8_t *) ctr;
-    while(size--)
-    {
-        *outputb++ = *ctr_p++ ^ *inputb++;
-    }
-}
-
-
 
 
