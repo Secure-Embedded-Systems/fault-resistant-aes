@@ -1,7 +1,9 @@
 
 #include <string.h>
+#include <assert.h>
 #include "aes.h"
 #include "bs.h"
+#include "utils.h"
 
 void aes_ecb_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key)
 {
@@ -82,7 +84,6 @@ static void INC_CTR(uint8_t * ctr, uint8_t i)
 
 void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key, uint8_t * iv)
 {
-    word_t input_space[BLOCK_SIZE];
     word_t rk[11][BLOCK_SIZE];
     word_t ctr[BLOCK_SIZE];
     uint8_t iv_copy[BLOCK_SIZE/8];
@@ -94,23 +95,33 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
     word_t * state = (word_t *)outputb;
     bs_expand_key(rk, key);
 
-    int i;
-    uint8_t j = 0;
-    for (i = 0; i < BLOCK_SIZE; i += WORDS_PER_BLOCK)
+    do
     {
-        memmove(ctr + i, iv_copy, 16);
-        INC_CTR(iv_copy,1);
+        int chunk = MIN(size, BS_BLOCK_SIZE);
+        int blocks = chunk / (BLOCK_SIZE/8);
+        if (chunk % (BLOCK_SIZE/8))
+        {
+            blocks++;
+        }
+
+        int i;
+        for (i = 0; i < blocks; i++)
+        {
+            memmove(ctr + (i * WORDS_PER_BLOCK), iv_copy, BLOCK_SIZE/8);
+            INC_CTR(iv_copy,1);
+        }
+
+        bs_cipher(ctr, rk);
+        size -= chunk;
+
+        uint8_t * ctr_p = (uint8_t *) ctr;
+        while(chunk--)
+        {
+            *outputb++ = *ctr_p++ ^ *inputb++;
+        }
+
     }
-
-    bs_cipher(ctr, rk);
-
-    assert(size < BS_BLOCK_SIZE);
-
-    uint8_t * ctr_p = (uint8_t *) ctr;
-    while(size--)
-    {
-        *outputb++ = *ctr_p++ ^ *inputb++;
-    }
+    while(size);
 
 }
 
