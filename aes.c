@@ -1,6 +1,5 @@
 
 #include <string.h>
-#include <assert.h>
 #include "aes.h"
 #include "bs.h"
 #include "utils.h"
