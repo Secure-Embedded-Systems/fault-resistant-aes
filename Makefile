@@ -1,8 +1,8 @@
 src = $(wildcard *.c)
 obj = $(src:.c=.o)
 
-LDFLAGS =
-CFLAGS = -O2
+LDFLAGS = -Wl,--gc-sections
+CFLAGS = -O2 -fdata-sections -ffunction-sections
 
 name = bitslice
 
