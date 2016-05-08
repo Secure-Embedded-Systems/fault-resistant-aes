@@ -2,6 +2,15 @@
 #include <string.h>
 #include "bs.h"
 
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define bs2le(x) (x)
+#define bs2be(x) (x)
+#elif __BYTE_ORDER == __BIG_ENDIAN
+#define bs2le(x) __builtin_bswap_wordsize(x)
+#define bs2be(x) __builtin_bswap_wordsize(x)
+#else
+#error "endianness not supported"
+#endif
 
 
 void bs_addroundkey(word_t * B, word_t * rk)
@@ -373,7 +382,7 @@ void bs_transpose_dst(word_t * transpose, word_t * blocks)
         int bitpos = ONE << k;
         for (i=0; i < WORDS_PER_BLOCK; i++)
         {
-            w = blocks[k * WORDS_PER_BLOCK + i];
+            w = bs2le(blocks[k * WORDS_PER_BLOCK + i]);
             int offset = i << MUL_SHIFT;
 
 #ifndef UNROLL_TRANSPOSE
@@ -471,7 +480,7 @@ void bs_transpose_rev(word_t * blocks)
     for(k=0; k < BLOCK_SIZE; k++)
     {
         w = blocks[k];
-        word_t bitpos = (ONE << (k % WORD_SIZE));
+        word_t bitpos = bs2be(ONE << (k % WORD_SIZE));
         word_t offset = k / WORD_SIZE;
 #ifndef UNROLL_TRANSPOSE
         int j;
@@ -1073,6 +1082,7 @@ void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
 {
     int round;
     bs_transpose(state);
+
 
     bs_addroundkey(state,rk[0]);
     for (round = 1; round < 10; round++)

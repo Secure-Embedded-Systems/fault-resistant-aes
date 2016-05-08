@@ -15,24 +15,28 @@
     #define MUL_SHIFT   6
     #define WFMT        "lx"
     #define WPAD        "016"
+    #define __builtin_bswap_wordsize(x) __builtin_bswap64(x)
 #elif (WORD_SIZE==32)
     typedef uint32_t    word_t;
     #define ONE         1UL
     #define MUL_SHIFT   5
     #define WFMT        "x"
     #define WPAD        "08"
+    #define __builtin_bswap_wordsize(x) __builtin_bswap32(x)
 #elif (WORD_SIZE==16)
     typedef uint16_t    word_t;
     #define ONE         1
     #define MUL_SHIFT   4
     #define WFMT        "hx"
     #define WPAD        "04"
+    #define __builtin_bswap_wordsize(x) __builtin_bswap16(x)
 #elif (WORD_SIZE==8)
     typedef uint8_t     word_t;
     #define ONE         1
     #define MUL_SHIFT   3
     #define WFMT        "hhx"
     #define WPAD        "02"
+    #define __builtin_bswap_wordsize(x) (x)
 #else
 #error "invalid word size"
 #endif
