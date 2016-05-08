@@ -22,6 +22,6 @@ This bitsliced implementation
 
 This work exists for education and research.  This repository exists as a reference for people working on bitslicing.
 
-Approximate footprint on 64 bit Intel with GCC 4.8.4: 8000-9000 KB
+Approximate footprint for encryption only on 64 bit Intel with GCC 4.8.4: 8000-9000 KB
 
-Performance on 64 bit Intel 4790: TDB 
+Encryption performance on 64 bit Intel 4790: TDB 
