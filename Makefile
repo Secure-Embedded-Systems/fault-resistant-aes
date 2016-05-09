@@ -4,6 +4,8 @@ obj = $(src:.c=.o)
 LDFLAGS = -Wl,--gc-sections
 CFLAGS = -O3 -fdata-sections -ffunction-sections -DUNROLL_TRANSPOSE
 
+CC=sparc-elf-gcc
+
 name = bitslice
 
 $(name):  _testbench $(obj)
