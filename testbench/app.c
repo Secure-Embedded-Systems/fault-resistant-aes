@@ -105,15 +105,25 @@ int cli_app(int argc, char * argv[])
 
     uint8_t * pt = (uint8_t *) malloc(amt);
     uint8_t * ct = (uint8_t *) malloc(amt);
+    uint8_t * ct2 = (uint8_t *) malloc(amt);
+
+    memset(pt,0,amt);
+    memset(ct,0,amt);
+    memset(ct2,0,amt+32);
 
     int ptlen = fread(pt, 1, amt, input);
     if (ptlen != amt)
     {
         perror("fread");
+        free(pt);
+        free(ct);
+        free(ct2);
         exit(2);
     }
 
     struct timespec tstart,tend;
+    memset(&tstart,0, sizeof(struct timespec));
+    memset(&tend,0, sizeof(struct timespec));
     clock_gettime(CLOCK_MONOTONIC, &tstart);
     {
         aes_ctr_encrypt(ct, pt, amt, key, iv);
@@ -123,19 +133,44 @@ int cli_app(int argc, char * argv[])
     double total = (((double)tend.tv_sec + 1.0e-9 * (double)tend.tv_nsec) -
                 ((double)tstart.tv_sec + 1.0e-9 * (double)tstart.tv_nsec));
 
-    printf("performance for %d word length\n", WORD_SIZE);
+    printf("unprotected performance for %d word length\n", WORD_SIZE);
     printf("-------------------------------\n");
     printf("%.5f s\n", total);
     printf("%.15f s/byte\n", total/amt);
     printf("%.5f cycles/byte (for 4 GHz)\n", 4000ull * (1ull<<20) * total/amt);
 
+    
+    memset(ct2,0,amt+32);
+
+    memset(&tstart,0, sizeof(struct timespec));
+    memset(&tend,0, sizeof(struct timespec));
+    clock_gettime(CLOCK_MONOTONIC, &tstart);
+    {
+        aes_ctr_encrypt_fr(ct2, pt, amt, key, iv);
+    }
+    clock_gettime(CLOCK_MONOTONIC, &tend);
+
+    total = (((double)tend.tv_sec + 1.0e-9 * (double)tend.tv_nsec) -
+                ((double)tstart.tv_sec + 1.0e-9 * (double)tstart.tv_nsec));
+
+    printf("protected performance for %d word length\n", WORD_SIZE);
+    printf("-------------------------------\n");
+    printf("%.5f s\n", total);
+    printf("%.15f s/byte\n", total/amt);
+    printf("%.5f cycles/byte (for 4 GHz)\n", 4000ull * (1ull<<20) * total/amt);
+
+    if (memcmp(ct, ct2, amt) != 0)
+    {
+        fprintf(stderr, "error: protect CTR does not match unprotected CTR\n");
+    }
+
 
     if (write(fileno(output), ct, amt) == -1)
     {
         perror("write");
-        exit(2);
     }
 
+    free(ct2);
     free(ct);
     free(pt);
 

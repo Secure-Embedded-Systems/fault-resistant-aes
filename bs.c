@@ -1,6 +1,7 @@
 
 #include <string.h>
 #include "bs.h"
+#include "fr_defs.h"
 
 // temp
 #include "aes.h"
@@ -1084,17 +1085,83 @@ void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
 
 }
 
-#include <stdio.h>
+void bs_addroundkey_fr(word_t * B, word_t * rk, word_t mask, word_t cmask)
+{
+    int i;
+
+    register word_t ebits = 0;
+    register word_t cbits = 0;
+
+    for (i = 0; i < BLOCK_SIZE; i++)
+    {
+        B[i] ^= rk[i];
+
+#ifdef FR_USE_INSTR_CHECKING
+        ebits |= (B[i] & mask) ^ (((mask>>1) & B[i])<<1);
+        cbits += (B[i] & cmask) >> CONTROL_SHIFT;
+#endif
+    }
+#ifdef FR_USE_INSTR_CHECKING
+    DATA_ERRORS = ebits;
+    CONTROL_ERRORS += cbits;
+#endif
+
+}
+
+void bs_cipher_faulty(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_t mask)
+{
+    int round;
+    static word_t rng = 0x55;
+    bs_transpose(state);
+
+    
+    /*printf("injecting fault in %x\n", (1 << (rng & BS_2_MASK)));*/
+
+    // random bit flip data fault
+    /*state[4] ^=  (1 << (rng & BS_2_MASK));*/
+
+    // control fault
+    /*state[4] ^= state[5];*/
+
+    word_t cmask = (1 << CONTROL_SHIFT);
+    mask &= ~cmask;
+
+
+    /*dump_word(state, 128);*/
+
+    bs_addroundkey(state,rk[0]);
+
+    for (round = 1; round < 10 - (FR_ROUNDS-1); round++)
+    {
+        bs_apply_sbox(state);
+        bs_shiftmix(state);
+        bs_addroundkey(state,rk[round]);
+    }
+
+#ifdef FR_USE_INSTR_CHECKING
+    for (round = 10 - (FR_ROUNDS-1); round < 10; round++)
+    {
+        bs_apply_sbox(state);
+        bs_shiftmix(state);
+        bs_addroundkey_fr(state,rk[round], mask, cmask);
+    }
+#endif
+
+    bs_apply_sbox(state);
+    bs_shiftrows(state);
+#ifdef FR_USE_INSTR_CHECKING
+    bs_addroundkey_fr(state,rk[10], mask, cmask);
+#else
+    bs_addroundkey(state,rk[10]);
+#endif
+    bs_transpose_rev(state);
+    rng = state[1];
+}
 
 void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
 {
     int round;
     bs_transpose(state);
-
-    word_t mask = fr_get_mask();
-    
-    /*state[4] ^= state[5];*/
-    state[4] ^= 8;
 
     bs_addroundkey(state,rk[0]);
     for (round = 1; round < 10; round++)

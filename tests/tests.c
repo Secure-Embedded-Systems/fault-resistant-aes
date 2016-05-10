@@ -73,6 +73,11 @@ void aes_ctr_test()
 
     printf("AES CTR\n");
 
+    printf("key: ");
+    dump_hex(key_vector,16);
+    printf("iv: ");
+    dump_hex(iv_vector, 16);
+
     aes_ctr_encrypt_fr(output, pt_vector, sizeof(pt_vector), key_vector, iv_vector);
     
     aes_ctr_encrypt(ct_vector, pt_vector, sizeof(pt_vector), key_vector, iv_vector);
