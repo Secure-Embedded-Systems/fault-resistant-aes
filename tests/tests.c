@@ -1,13 +1,14 @@
 #include <stdint.h>
 #include <stdlib.h>
-#include "../utils.h"
 #include "../aes.h"
 
 #ifdef TEST_FOOTPRINT
 #define printf(fmt, ...) (0)
 #define fprintf(f,fmt, ...) (0)
+#define dump_hex(f,f2)  (0)
 #else
 #include <stdio.h>
+#include "../utils.h"
 #endif
 
 void aes_ecb_test()
@@ -57,19 +58,19 @@ void aes_ctr_test()
     uint8_t iv_vector[16]  =
         "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
-    uint8_t pt_vector[20000];
-    uint8_t ct_vector[20000];
+#ifndef TEST_FOOTPRINT
+#define vector_size 20000
+#else
+#define vector_size 32
+#endif
+
+    uint8_t pt_vector[vector_size];
+    uint8_t ct_vector[vector_size];
     uint8_t output[sizeof(ct_vector)];
     uint8_t input[sizeof(pt_vector)];
 
-    FILE * rng = fopen("/dev/urandom","r");
-
-    if (read(fileno(rng), pt_vector, sizeof(pt_vector)) != sizeof(pt_vector))
-    {
-        perror("read");
-        exit(2);
-    }
-
+    word_t rk[11][BLOCK_SIZE];
+    bs_expand_key(rk, key_vector);
 
     printf("AES CTR\n");
 
@@ -78,19 +79,22 @@ void aes_ctr_test()
     printf("iv: ");
     dump_hex(iv_vector, 16);
 
-    aes_ctr_encrypt_fr(output, pt_vector, sizeof(pt_vector), key_vector, iv_vector);
+    aes_ctr_encrypt_fr(output, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk);
     
-    aes_ctr_encrypt(ct_vector, pt_vector, sizeof(pt_vector), key_vector, iv_vector);
+#ifndef TEST_FOOTPRINT
+    aes_ctr_encrypt(ct_vector, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk);
+#endif
 
 
     /*printf("cipher text: \n");*/
     /*dump_hex(output,sizeof(pt_vector));*/
     
-    aes_ctr_decrypt_fr(input,output,sizeof(pt_vector),key_vector, iv_vector);
+    aes_ctr_decrypt_fr(input,output,sizeof(pt_vector),key_vector, iv_vector, rk);
 
     /*printf("plain text: \n");*/
     /*dump_hex(input,sizeof(pt_vector));*/
 
+#ifndef TEST_FOOTPRINT
     if (memcmp(pt_vector, input, sizeof(pt_vector)) != 0)
     {
         fprintf(stderr,"error: decrypted ciphertext is not the same as the input plaintext\n");
@@ -105,6 +109,7 @@ void aes_ctr_test()
     {
         printf("CTR passes test vector\n\n");
     }
+#endif
 
 }
 

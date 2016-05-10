@@ -121,12 +121,16 @@ int cli_app(int argc, char * argv[])
         exit(2);
     }
 
+    word_t rk[11][BLOCK_SIZE];
+    bs_expand_key(rk, key);
+
+
     struct timespec tstart,tend;
     memset(&tstart,0, sizeof(struct timespec));
     memset(&tend,0, sizeof(struct timespec));
     clock_gettime(CLOCK_MONOTONIC, &tstart);
     {
-        aes_ctr_encrypt(ct, pt, amt, key, iv);
+        aes_ctr_encrypt(ct, pt, amt, key, iv, rk);
     }
     clock_gettime(CLOCK_MONOTONIC, &tend);
 
@@ -146,7 +150,7 @@ int cli_app(int argc, char * argv[])
     memset(&tend,0, sizeof(struct timespec));
     clock_gettime(CLOCK_MONOTONIC, &tstart);
     {
-        aes_ctr_encrypt_fr(ct2, pt, amt, key, iv);
+        aes_ctr_encrypt_fr(ct2, pt, amt, key, iv,rk);
     }
     clock_gettime(CLOCK_MONOTONIC, &tend);
 
@@ -162,9 +166,9 @@ int cli_app(int argc, char * argv[])
     if (memcmp(ct, ct2, amt) != 0)
     {
         fprintf(stderr, "error: protect CTR does not match unprotected CTR\n");
-        dump_hex(ct,amt);
-        printf("\n");
-        dump_hex(ct2,amt);
+        /*dump_hex(ct,amt);*/
+        /*printf("\n");*/
+        /*dump_hex(ct2,amt);*/
     }
 
 

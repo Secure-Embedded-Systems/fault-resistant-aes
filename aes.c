@@ -1,11 +1,17 @@
 
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include "aes.h"
 #include "bs.h"
-#include "fr_defs.h"
 #include "utils.h"
+#include "fr_defs.h"
+
+#ifdef TEST_FOOTPRINT
+#define printf(fmt, ...) (0)
+#define fprintf(f,fmt, ...) (0)
+#else
+#include <stdio.h>
+#endif
 
 void aes_ecb_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key)
 {
@@ -84,9 +90,9 @@ static void INC_CTR(uint8_t * ctr, uint8_t i)
     }
 }
 
-void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key, uint8_t * iv)
+void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key, uint8_t * iv,
+        word_t (* rk)[BLOCK_SIZE])
 {
-    word_t rk[11][BLOCK_SIZE];
     word_t ctr[BLOCK_SIZE];
     uint8_t iv_copy[BLOCK_SIZE/8];
     
@@ -95,7 +101,6 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
     memmove(iv_copy,iv,BLOCK_SIZE/8);
 
     word_t * state = (word_t *)outputb;
-    bs_expand_key(rk, key);
 
     do
     {
@@ -186,18 +191,15 @@ static void __debug(char * line, int num)
     fprintf(stderr, "%s: %d\n",line, num);
 }
 
-void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv)
+void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv,
+        word_t (* rk)[BLOCK_SIZE])
 {
-    word_t rk[11][BLOCK_SIZE];
     word_t ctr[BLOCK_SIZE];
     uint8_t iv_copy[BLOCK_SIZE/8];
     
-    memset(outputb,0,size);
-    memset(ctr,0,sizeof(ctr));
     memmove(iv_copy,iv,BLOCK_SIZE/8);
 
     word_t * state = (word_t *)outputb;
-    bs_expand_key(rk, key);
 
     fr_seed_mask(inputb[0]);
 
@@ -208,8 +210,6 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
         int blocks = chunk / (BLOCK_SIZE/8);
         uint8_t moved_const = 0;
         word_t frmask = fr_get_mask();
-
-        /*printf("MASK: %x\n",frmask);*/
 
         if (chunk % (BLOCK_SIZE/8))
         {
@@ -246,10 +246,6 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
             memmove(ctr + (i * WORDS_PER_BLOCK), iv_copy, BLOCK_SIZE/8);
         }
 
-
-        /*printf("j:%d\n",j);*/
-        /*size -= ((WORD_SIZE-1) - num_rbits) << 4;*/
-        /*printf("size: %d\n",size);*/
 
         bs_cipher_faulty(ctr, rk, frmask);
 
