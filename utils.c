@@ -22,9 +22,11 @@ void dump_word(word_t * h, int len)
 
 void dump_block(word_t * h, int len)
 {
+    int i = 0;
     while(len-=2 >= 0)
-        printf("%" WPAD WFMT"%" WPAD WFMT  "\n",*h++,*h++);
+        printf("%02d: %lx: %" WPAD WFMT"%" WPAD WFMT  "\n",i++,(uint64_t)h,*h++,*h++);
     printf("\n");
+    fflush(stdout);
 }
 
 #endif

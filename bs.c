@@ -386,7 +386,7 @@ void bs_transpose_dst(word_t * transpose, word_t * blocks)
     word_t w;
     for(k=0; k < WORD_SIZE; k++)
     {
-        int bitpos = ONE << k;
+        word_t bitpos = ONE << k;
         for (i=0; i < WORDS_PER_BLOCK; i++)
         {
             w = bs2le(blocks[k * WORDS_PER_BLOCK + i]);
@@ -1123,7 +1123,7 @@ void bs_cipher_faulty(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_
     // control fault
     /*state[4] ^= state[5];*/
 
-    word_t cmask = (1 << CONTROL_SHIFT);
+    word_t cmask = (ONE << CONTROL_SHIFT);
     mask &= ~cmask;
 
 

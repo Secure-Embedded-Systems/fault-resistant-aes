@@ -105,7 +105,7 @@ int cli_app(int argc, char * argv[])
 
     uint8_t * pt = (uint8_t *) malloc(amt);
     uint8_t * ct = (uint8_t *) malloc(amt);
-    uint8_t * ct2 = (uint8_t *) malloc(amt);
+    uint8_t * ct2 = (uint8_t *) malloc(amt+32);
 
     memset(pt,0,amt);
     memset(ct,0,amt);
@@ -162,6 +162,9 @@ int cli_app(int argc, char * argv[])
     if (memcmp(ct, ct2, amt) != 0)
     {
         fprintf(stderr, "error: protect CTR does not match unprotected CTR\n");
+        dump_hex(ct,amt);
+        printf("\n");
+        dump_hex(ct2,amt);
     }
 
 
