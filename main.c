@@ -21,7 +21,7 @@ int main(int argc, char * argv[])
 
 #ifdef RUN_TESTS
 #ifndef TEST_FOOTPRINT
-    aes_ecb_test();
+    /*aes_ecb_test();*/
 #endif
     aes_ctr_test();
 

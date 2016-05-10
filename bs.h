@@ -16,6 +16,7 @@
     #define WFMT        "lx"
     #define WPAD        "016"
     #define __builtin_bswap_wordsize(x) __builtin_bswap64(x)
+    #define BS_2_MASK   0x3f
 #elif (WORD_SIZE==32)
     typedef uint32_t    word_t;
     #define ONE         1UL
@@ -23,6 +24,7 @@
     #define WFMT        "x"
     #define WPAD        "08"
     #define __builtin_bswap_wordsize(x) __builtin_bswap32(x)
+    #define BS_2_MASK   0x1f
 #elif (WORD_SIZE==16)
     typedef uint16_t    word_t;
     #define ONE         1
@@ -30,6 +32,7 @@
     #define WFMT        "hx"
     #define WPAD        "04"
     #define __builtin_bswap_wordsize(x) __builtin_bswap16(x)
+    #define BS_2_MASK   0xf
 #elif (WORD_SIZE==8)
     typedef uint8_t     word_t;
     #define ONE         1
@@ -37,6 +40,7 @@
     #define WFMT        "hhx"
     #define WPAD        "02"
     #define __builtin_bswap_wordsize(x) (x)
+    #define BS_2_MASK   0x7
 #else
 #error "invalid word size"
 #endif

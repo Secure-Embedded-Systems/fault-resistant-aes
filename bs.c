@@ -2,6 +2,10 @@
 #include <string.h>
 #include "bs.h"
 
+// temp
+#include "aes.h"
+//
+
 #if (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) ||\
         defined(__amd64__) || defined(__amd32__)|| defined(__amd16__)
 #define bs2le(x) (x)
@@ -1080,11 +1084,17 @@ void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
 
 }
 
+#include <stdio.h>
+
 void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
 {
     int round;
     bs_transpose(state);
 
+    word_t mask = fr_get_mask();
+    
+    /*state[4] ^= state[5];*/
+    state[4] ^= 8;
 
     bs_addroundkey(state,rk[0]);
     for (round = 1; round < 10; round++)
