@@ -17,7 +17,7 @@ Current results
 Performance measurements done for a fault resistant AES-CTR on a 64 bit 4 GHz Intel 4790 and compiled with GCC 4.8.4.
 Overhead was calculated in reference to the [(unprotected) bitsliced implementation](https://github.com/conorpp/bitsliced-aes).
 
-#### No fault detection (i.e. minimal redundant slices)
+#### lightweight fault detection (i.e. minimal redundant slices)
 
 |                      |footprint       | overhead | throughput     | overhead |
 |----------------------|----------------|----------|----------------|----------|
