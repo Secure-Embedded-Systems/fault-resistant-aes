@@ -59,7 +59,7 @@ void aes_ctr_test()
         "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
 #ifndef TEST_FOOTPRINT
-#define vector_size 200
+#define vector_size 2000
 #else
 #define vector_size 32
 #endif
@@ -85,22 +85,12 @@ void aes_ctr_test()
     aes_ctr_encrypt(ct_vector, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk);
 #endif
 
-
-    /*printf("cipher text: \n");*/
-    /*dump_hex(output,sizeof(pt_vector));*/
-    
     aes_ctr_decrypt_fr(input,output,sizeof(pt_vector),key_vector, iv_vector, rk);
-
-    /*printf("plain text: \n");*/
-    /*dump_hex(input,sizeof(pt_vector));*/
 
 #ifndef TEST_FOOTPRINT
     if (memcmp(pt_vector, input, sizeof(pt_vector)) != 0)
     {
         fprintf(stderr,"error: decrypted ciphertext is not the same as the input plaintext\n");
-        dump_hex(input,vector_size);
-        printf("\n");
-        dump_hex(pt_vector,vector_size);
         exit(1);
     }
     else if (memcmp(ct_vector, output, sizeof(pt_vector)) != 0)
