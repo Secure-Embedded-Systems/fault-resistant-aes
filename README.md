@@ -21,16 +21,16 @@ Overhead was calculated in reference to the [(unprotected) bitsliced implementat
 
 |                      |footprint       | overhead | throughput     | overhead |
 |----------------------|----------------|----------|----------------|----------|
-|Performance optimized |  14,309 bytes  |  17.8%   | 55 cycles/byte |   7.8%   |
-|Footprint optimized   |  10,277 bytes  |   20%    | 85 cycles/byte |   4.9%   |
+|Performance optimized |  12,708 bytes  |  17.8%   |54.4 cycles/byte|   6.7%   |
+|Footprint optimized   |  9,428 bytes   |   20%    | 83 cycles/byte |   2.5%   |
 
 
 #### Maximum fault detection (i.e. half redundant slices, checking during every AES round)
 
 |                      |footprint       | overhead | throughput      | overhead |
 |----------------------|----------------|----------|-----------------|----------|
-|Performance optimized |  14,309 bytes  |    17.8% | 116 cycles/byte |  127.5%  |
-|Footprint optimized   |  10,277 bytes  |    20%   | 174 cycles/byte |  114.8%  |
+|Performance optimized |  12,708 bytes  |    17.8% |111.8 cycles/byte|  119.2%  |
+|Footprint optimized   |  9,428 bytes   |    20.0% |166.9 cycles/byte|  106.0%  |
 
 
 
