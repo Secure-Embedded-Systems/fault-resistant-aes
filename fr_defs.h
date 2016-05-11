@@ -20,10 +20,10 @@
 #define FR_STARTING_ROUNDS 1
 #endif
 
-extern word_t DATA_ERRORS;
-extern word_t CONTROL_ERRORS;
+extern volatile word_t DATA_ERRORS;
+extern volatile word_t CONTROL_ERRORS;
 extern word_t CONTROL_SHIFT;
-extern word_t CONTROL_VALS[10];
+extern uint16_t CONTROL_VALS[10];
 extern uint8_t FR_ROUNDS;
 
 

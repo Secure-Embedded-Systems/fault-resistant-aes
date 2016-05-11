@@ -100,8 +100,6 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
     memset(ctr,0,sizeof(ctr));
     memmove(iv_copy,iv,BLOCK_SIZE/8);
 
-    word_t * state = (word_t *)outputb;
-
     do
     {
         int chunk = MIN(size, BS_BLOCK_SIZE);
@@ -139,21 +137,24 @@ static uint8_t ones_enc[] = "\x8a\xf2\x86\x01\x42\xf7\x86\xf4\x09\x30\x7c\x1a\x3
 static int iterations_encrypted = 0;
 
 //                          1,    2,    3,    4,    5,     6,     7,     8,     9,     10
-word_t CONTROL_VALS[10] = {0x3d, 0x88, 0xc1, 0xfb, 0x131, 0x175, 0x1b4, 0x1f8, 0x231, 0x271};
+uint16_t CONTROL_VALS[10] = {0x3d, 0x88, 0xc1, 0xfb, 0x131, 0x175, 0x1b4, 0x1f8, 0x231, 0x271};
 
 uint8_t FR_ROUNDS = FR_STARTING_ROUNDS;
-word_t DATA_ERRORS = 0;
-word_t CONTROL_ERRORS = 0;
+volatile word_t DATA_ERRORS = 0;
+volatile word_t CONTROL_ERRORS = 0;
 word_t CONTROL_SHIFT;
 
 
 void fault_handler()
 {
-    CONTROL_ERRORS = 0;
     DATA_ERRORS = 0;
 
     num_rbits += FR_INCREMENT;
-    FR_ROUNDS++;
+    if (FR_ROUNDS < 10)
+    {
+        CONTROL_ERRORS = CONTROL_VALS[FR_ROUNDS];
+        FR_ROUNDS++;
+    }
     /*printf("blocks_encrypted: %d\n", blocks_encrypted);*/
     /*printf("iterations_encrypted: %d\n", iterations_encrypted);*/
     if (num_rbits > 20)
@@ -199,15 +200,11 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
     
     memmove(iv_copy,iv,BLOCK_SIZE/8);
 
-    word_t * state = (word_t *)outputb;
-
-    fr_seed_mask(inputb[0]);
-
-
     do
     {
         int chunk = MIN(size, BS_BLOCK_SIZE);
-        int blocks = chunk / (BLOCK_SIZE/8);
+        /*int blocks = chunk / (BLOCK_SIZE/8);*/
+        int blocks = chunk >> 4;
         uint8_t moved_const = 0;
         word_t frmask = fr_get_mask();
 
@@ -254,29 +251,23 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
         fr_seed_mask(ctr[0]);
 
 
-        uint8_t * ctr_p = (uint8_t *) ctr + BLOCK_SIZE / 8;
+        uint8_t * ctr_p = (uint8_t *) ctr + (BLOCK_SIZE / 8);
 
 #ifdef FR_USE_ALG_CHECKING
         for (i = 1; i < WORD_SIZE; i+=2)
         {
             if (frmask & (ONE<<i))
             {
+                uint8_t * mem = ctr_p - BLOCK_SIZE/8;
                 if (moved_const)
                 {
                     moved_const = 0;
-                    if (memcmp(ctr_p, ones_enc, BLOCK_SIZE/8) != 0)
-                    {
-                        printf("control fault in %d!!\n", i);
-                        fault_handler();
-                    }
+                    mem = ones_enc;
                 }
-                else if (memcmp(ctr_p, ctr_p - BLOCK_SIZE/8, BLOCK_SIZE/8) != 0)
+                if (memcmp(ctr_p, mem, BLOCK_SIZE/8) != 0)
                 {
                     printf("faulty slice %d!!\n", i);
-                    fault_handler();
-                }
-                else
-                {
+                    goto fault;
                 }
             }
             ctr_p += BLOCK_SIZE/4;
@@ -284,21 +275,28 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
 #endif
 
 #ifdef FR_USE_INSTR_CHECKING
+        if (DATA_ERRORS || CONTROL_ERRORS != CONTROL_VALS[FR_ROUNDS - 1])
         {
-            if (DATA_ERRORS)
-            {
-                printf("data fault!\n");
-                fault_handler();
-            }
-            if (CONTROL_ERRORS != CONTROL_VALS[FR_ROUNDS - 1])
-            {
-                printf("control fault %x!\n", CONTROL_ERRORS);
-                fault_handler();
-            }
-            CONTROL_ERRORS = 0;
-            DATA_ERRORS = 0;
+            goto fault;
         }
+        if (DATA_ERRORS || CONTROL_ERRORS != CONTROL_VALS[FR_ROUNDS - 1])
+        {
+            goto fault;
+        }
+        if (DATA_ERRORS || CONTROL_ERRORS != CONTROL_VALS[FR_ROUNDS - 1])
+        {
+            goto fault;
+        }
+
+        CONTROL_ERRORS = 0;
+        DATA_ERRORS = 0;
+
 #endif
+        goto skip;
+fault:
+
+        fault_handler();
+skip:
 
         ctr_p = (uint8_t *) ctr;
 

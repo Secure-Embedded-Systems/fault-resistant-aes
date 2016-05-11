@@ -82,7 +82,7 @@ void aes_ctr_test()
     aes_ctr_encrypt_fr(output, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk);
     
 #ifndef TEST_FOOTPRINT
-    aes_ctr_encrypt(ct_vector, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk);
+    /*aes_ctr_encrypt(ct_vector, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk);*/
 #endif
 
 
