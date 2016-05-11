@@ -198,6 +198,7 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
     word_t ctr[BLOCK_SIZE];
     uint8_t iv_copy[BLOCK_SIZE/8];
     
+
     memmove(iv_copy,iv,BLOCK_SIZE/8);
 
     do
@@ -318,6 +319,7 @@ skip:
 
     }
     while(size > 0);
+    iterations_encrypted = 0;
 
 }
 

@@ -2,8 +2,8 @@
 #define _FR_DEFS_
 
 
-#define FR_STARTING_R_BITS  32
-#define FR_STARTING_ROUNDS  10
+#define FR_STARTING_R_BITS  1
+#define FR_STARTING_ROUNDS  1
 #define FR_INCREMENT        1
 
 //#define FR_ROUNDS           1
