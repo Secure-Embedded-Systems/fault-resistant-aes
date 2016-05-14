@@ -50,6 +50,7 @@ void bs_transpose_rev(word_t * blocks);
 void bs_transpose_dst(word_t * transpose, word_t * blocks);
 
 void bs_add_slice(word_t * dst, word_t * block);
+void bs_get_slice(word_t * dst, word_t * block);
 void bs_cipher_dev(word_t _state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_t * key);
 
 void bs_sbox(word_t U[8]);

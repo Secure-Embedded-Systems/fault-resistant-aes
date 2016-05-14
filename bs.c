@@ -20,6 +20,18 @@
 #error "endianness not supported"
 #endif
 
+void dump_round(word_t * r, int round)
+{
+    word_t space[BLOCK_SIZE];
+
+    memset(space,0,sizeof(space));
+    memmove(space, r, sizeof (space));
+
+    bs_transpose_rev(space);
+
+    printf("round %d\n",round);
+    dump_hex((uint8_t *) space, 16);
+}
 
 void bs_addroundkey(word_t * B, word_t * rk)
 {
@@ -407,7 +419,7 @@ void bs_add_slice(word_t * dst, word_t * block)
         dst[i] <<= 1;
 #ifndef UNROLL_TRANSPOSE
         int shift = i % WORD_SIZE;
-        dst[i] |= ((block[i / WORD_SIZE] & (ONE << shift)) >> shift);
+        /*dst[i] |= ((block[i / WORD_SIZE] & (ONE << shift)) >> shift);*/
 #endif
     }
 #ifdef UNROLL_TRANSPOSE
@@ -1431,17 +1443,17 @@ void bs_expand_key_dev(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
 
     expand_key(key);
 
-    word_t * rk0 = (word_t *) key + 0;
-    word_t * rk1 = (word_t *) key + 16;
-    word_t * rk2 = (word_t *) key + 32;
-    word_t * rk3 = (word_t *) key + 48;
-    word_t * rk4 = (word_t *) key + 64;
-    word_t * rk5 = (word_t *) key + 80;
-    word_t * rk6 = (word_t *) key + 96;
-    word_t * rk7 = (word_t *) key + 112;
-    word_t * rk8 = (word_t *) key + 128;
-    word_t * rk9 = (word_t *) key + 144;
-    word_t * rk10 = (word_t *) key + 160;
+    word_t * rk0 = (word_t *) (key + 0);
+    word_t * rk1 = (word_t *) (key + 16);
+    word_t * rk2 = (word_t *) (key + 32);
+    word_t * rk3 = (word_t *) (key + 48);
+    word_t * rk4 = (word_t *) (key + 64);
+    word_t * rk5 = (word_t *) (key + 80);
+    word_t * rk6 = (word_t *) (key + 96);
+    word_t * rk7 = (word_t *) (key + 112);
+    word_t * rk8 = (word_t *) (key + 128);
+    word_t * rk9 = (word_t *) (key + 144);
+    word_t * rk10 = (word_t *) (key + 160);
 
     bs_add_slice(rk[0],rk9);
     bs_add_slice(rk[0],rk8);
@@ -1452,8 +1464,8 @@ void bs_expand_key_dev(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
     bs_add_slice(rk[0],rk3);
     bs_add_slice(rk[0],rk2);
     bs_add_slice(rk[0],rk1);
-    bs_add_slice(rk[1],rk10);
 
+    bs_add_slice(rk[1],rk10);
 
 }
 
@@ -1577,10 +1589,6 @@ void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
     int round;
     
     bs_transpose(state);
-    /*printf("reference: \n");*/
-    /*dump_word(state, 128);*/
-
-
     bs_addroundkey(state,rk[0]);
 
     for (round = 1; round < 10; round++)
@@ -1590,6 +1598,11 @@ void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
         /*bs_mixcolumns(state);*/
         bs_shiftmix(state);
         bs_addroundkey(state,rk[round]);
+        /*if (round == 1)*/
+        /*{*/
+            /*printf("correct ");*/
+            /*dump_round(state,round);*/
+        /*}*/
     }
     bs_apply_sbox(state);
     bs_shiftrows(state);

@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "../aes.h"
 
 #ifdef TEST_FOOTPRINT
@@ -10,6 +12,9 @@
 #include <stdio.h>
 #include "../utils.h"
 #endif
+
+
+void bs_expand_key_dev(word_t (* rk)[BLOCK_SIZE], uint8_t * _key);
 
 void aes_ecb_test()
 {
@@ -59,7 +64,7 @@ void aes_ctr_test()
         "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
 #ifndef TEST_FOOTPRINT
-#define vector_size 1024
+#define vector_size (700 * 16)
 #else
 #define vector_size 32
 #endif
@@ -73,9 +78,14 @@ void aes_ctr_test()
 #ifdef FILL_RANDOM
 
     FILE * r = fopen("/dev/urandom","r");
-    read(fileno(r), pt_vector, vector_size);
+    if (read(fileno(r), pt_vector, vector_size) < 0)
+    {
+        perror("read");
+        exit(2);
+    }
     fclose(r);
     printf("randomized %d bytes of input\n", vector_size);
+
 
 #endif
 

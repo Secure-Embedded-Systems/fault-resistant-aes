@@ -14,6 +14,8 @@
 #include <stdio.h>
 #endif
 
+void dump_round(word_t * r,int roud);
+
 void aes_ecb_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key)
 {
     word_t input_space[BLOCK_SIZE];
@@ -96,6 +98,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
 {
     word_t ctr[BLOCK_SIZE];
     uint8_t iv_copy[BLOCK_SIZE/8];
+
     
     memset(outputb,0,size);
     memset(ctr,0,sizeof(ctr));
@@ -118,9 +121,9 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
         }
 
         bs_cipher(ctr, rk);
-        size -= chunk;
 
         uint8_t * ctr_p = (uint8_t *) ctr;
+        size -= chunk;
         while(chunk--)
         {
             *outputb++ = *ctr_p++ ^ *inputb++;
@@ -129,12 +132,13 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
     }
     while(size);
 
+
 }
 
 static int num_rbits = (FR_STARTING_R_BITS+1);
 static uint8_t rng_seed = 0x55;
 static uint8_t ones_block[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
-static uint8_t ones_enc[] = "\x8a\xf2\x86\x01\x42\xf7\x86\xf4\x09\x30\x7c\x1a\x3f\x7e\xaa\xac";
+volatile uint8_t ones_enc[] = "\x8a\xf2\x86\x01\x42\xf7\x86\xf4\x09\x30\x7c\x1a\x3f\x7e\xaa\xac";
 static int iterations_encrypted = 0;
 
 //                          1,    2,    3,    4,    5,     6,     7,     8,     9,     10
@@ -188,129 +192,105 @@ word_t fr_get_mask()
 #define fr_seed_mask(seed) (rng_seed ^= (seed))
 
 #define debug() __debug(__FILE__, __LINE__)
-static void __debug(char * line, int num)
-{
-    fprintf(stderr, "%s: %d\n",line, num);
-}
+/*static void __debug(char * line, int num)*/
+/*{*/
+    /*fprintf(stderr, "%s: %d\n",line, num);*/
+/*}*/
 
-static void yield(uint8_t * outputb, uint8_t * ctr_p, int chunk)
-{
-
-}
 
 void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv,
         word_t (* rk)[BLOCK_SIZE])
 {
     word_t ctr[BLOCK_SIZE];
-    uint8_t iv_copy[BLOCK_SIZE/8];
+    word_t iv_copy[WORDS_PER_BLOCK];
     word_t state[BLOCK_SIZE];
     word_t last[BLOCK_SIZE];
+    word_t block_tmp[WORDS_PER_BLOCK];
     
     memset(outputb,0,size);
     memset(ctr,0,sizeof(ctr));
     memmove(iv_copy,iv,BLOCK_SIZE/8);
+    memmove(block_tmp,iv,BLOCK_SIZE/8);
+
     int offset = 0;
 
-
-    do
-    {
-        int chunk = MIN(size, BS_BLOCK_SIZE);
-        int blocks = chunk / (BLOCK_SIZE/8);
+        int blocks = size / (BLOCK_SIZE/8);
         memset(state, 0, sizeof(state));
-        if (chunk % (BLOCK_SIZE/8))
+        if (size % (BLOCK_SIZE/8))
         {
             blocks++;
         }
 
-        int i,j,k = 0;
+        int i,j = 0;
+
         for (i = 0; i < blocks; i++)
         {
-            memmove(ctr + (i * WORDS_PER_BLOCK), iv_copy, BLOCK_SIZE/8);
-            INC_CTR(iv_copy,1);
-        }
 
-        for (i = blocks-1; i > -1; i--)
-        {
-            word_t * block = ctr + i * WORDS_PER_BLOCK;
+            if (i > 8)
+            {
+                bs_get_slice(state, last);
+
+                bs_apply_sbox(last);
+                bs_shiftrows(last);
+                bs_addroundkey(last,rk[1]);
+                bs_transpose_rev(last);
+
+                memmove(outputb + offset, last, 16);
+                offset += 16;
+            }
+
             for (j=0; j < WORDS_PER_BLOCK; j++)
             {
-                block[j] ^= ((word_t*)key)[j];
+                block_tmp[j] = iv_copy[j] ^ ((word_t*)key)[j];
             }
-            bs_add_slice(state, block);
+            INC_CTR((uint8_t *)iv_copy,1);
+
+            bs_add_slice(state, block_tmp);
+
+            bs_apply_sbox(state);
+            bs_shiftmix(state);
+
+            bs_addroundkey(state,rk[0]);
+
+        }
+
+        int leftover = MIN(i,9);
+
+        for (; i < 9; i++)
+        {
+            bs_add_slice(state, (word_t *)ones_block);
 
             bs_apply_sbox(state);
             bs_shiftmix(state);
             bs_addroundkey(state,rk[0]);
-            k++;
-
-
-            if (k >= 9)
-            {
-                bs_get_slice(state, last);
-                bs_apply_sbox(last);
-                bs_shiftrows(last);
-                bs_addroundkey(last,rk[1]);
-                bs_transpose_rev(last);
-
-                dump_word(last,128);
-
-                memmove(outputb + offset, last, 16);
-                offset += 16;
-
-            }
         }
 
-        if (k >= 9)
+        for (j=0; j<leftover; j++)
         {
-            for(k=0; k < 8; k++)
-            {
-                bs_add_slice(state, (word_t *)ones_block);
+            bs_get_slice(state, last);
 
-                bs_apply_sbox(state);
-                bs_shiftmix(state);
-                bs_addroundkey(state,rk[0]);
+            bs_apply_sbox(last);
+            bs_shiftrows(last);
+            bs_addroundkey(last,rk[1]);
+            bs_transpose_rev(last);
 
-                bs_get_slice(state, last);
-                bs_apply_sbox(last);
-                bs_shiftrows(last);
-                bs_addroundkey(last,rk[1]);
-                bs_transpose_rev(last);
+            memmove(outputb + offset, last, 16);
+            offset += 16;
 
-                memmove(outputb + offset, last, 16);
-                offset += 16;
+            bs_add_slice(state, (word_t *)ones_block);
+            bs_apply_sbox(state);
+            bs_shiftmix(state);
+            bs_addroundkey(state,rk[0]);
 
-            }
         }
 
-        /*int round;*/
-        /*for (round = 1; round < 10; round++)*/
-        /*{*/
-            /*bs_apply_sbox(state);*/
-            /*[>bs_shiftrows(state);<]*/
-            /*[>bs_mixcolumns(state);<]*/
-            /*bs_shiftmix(state);*/
-            /*bs_addroundkey(state,rk[round]);*/
-        /*}*/
-        /*bs_apply_sbox(state);*/
-        /*bs_shiftrows(state);*/
-        /*bs_addroundkey(state,rk[10]);*/
-        /*bs_transpose_rev(state);*/
-
-        /*bs_cipher_dev(ctr, rk, (word_t * )key);*/
-        
-        printf("chunk == %d, offset == %d\n",chunk,offset);
-        /*assert(chunk == offset);*/
-        size -= chunk;
-        /*offset = 0;*/
-
-        uint8_t * ctr_p = (uint8_t *) state;
-        while(chunk--)
+        size -= offset;
+    
+        while(offset--)
         {
-            *outputb++ ^= *inputb++;
+            outputb[offset] ^= inputb[offset];
         }
 
-    }
-    while(size);
 }
 
 
