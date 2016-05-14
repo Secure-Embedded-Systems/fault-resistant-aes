@@ -69,6 +69,16 @@ void aes_ctr_test()
     uint8_t output[sizeof(ct_vector)+32];
     uint8_t input[sizeof(pt_vector)+32];
 
+#define FILL_RANDOM
+#ifdef FILL_RANDOM
+
+    FILE * r = fopen("/dev/urandom","r");
+    read(fileno(r), pt_vector, vector_size);
+    fclose(r);
+    printf("randomized %d bytes of input\n", vector_size);
+
+#endif
+
     word_t rk[11][BLOCK_SIZE];
     bs_expand_key(rk, key_vector);
 

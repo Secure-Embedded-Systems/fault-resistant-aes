@@ -198,129 +198,37 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
     word_t ctr[BLOCK_SIZE];
     uint8_t iv_copy[BLOCK_SIZE/8];
     
-
+    memset(outputb,0,size);
+    memset(ctr,0,sizeof(ctr));
     memmove(iv_copy,iv,BLOCK_SIZE/8);
 
     do
     {
         int chunk = MIN(size, BS_BLOCK_SIZE);
-        /*int blocks = chunk / (BLOCK_SIZE/8);*/
-        int blocks = chunk >> 4;
-        uint8_t moved_const = 0;
-        word_t frmask = fr_get_mask();
-
+        int blocks = chunk / (BLOCK_SIZE/8);
         if (chunk % (BLOCK_SIZE/8))
         {
             blocks++;
         }
 
-        int i,j=1;
-        memset(ctr, 0xff, BS_BLOCK_SIZE);
-        if (iterations_encrypted)
+        int i;
+        for (i = 0; i < blocks; i++)
         {
+            memmove(ctr + (i * WORDS_PER_BLOCK), iv_copy, BLOCK_SIZE/8);
             INC_CTR(iv_copy,1);
         }
-        memmove(ctr, iv_copy, BLOCK_SIZE/8);
-        size -= BLOCK_SIZE/8;
-        for (i = 1; i < WORD_SIZE; i++)
+
+        bs_cipher_dev(ctr, rk, (word_t * )key);
+        size -= chunk;
+
+        uint8_t * ctr_p = (uint8_t *) ctr;
+        while(chunk--)
         {
-            // protected stream
-            if ((frmask & (ONE<<i)))
-            {
-                if(!moved_const)
-                {
-                    moved_const = 1;
-                    CONTROL_SHIFT = i;
-                    continue;
-                }
-            }
-            else
-            if (j < blocks)
-            {
-                INC_CTR(iv_copy,1);
-                j++;
-                size -= BLOCK_SIZE/8;
-            }
-            memmove(ctr + (i * WORDS_PER_BLOCK), iv_copy, BLOCK_SIZE/8);
-        }
-
-
-        bs_cipher_faulty(ctr, rk, frmask);
-
-        iterations_encrypted++;
-
-        fr_seed_mask(ctr[0]);
-
-
-        uint8_t * ctr_p = (uint8_t *) ctr + (BLOCK_SIZE / 8);
-
-#ifdef FR_USE_ALG_CHECKING
-        for (i = 1; i < WORD_SIZE; i+=2)
-        {
-            if (frmask & (ONE<<i))
-            {
-                uint8_t * mem = ctr_p - BLOCK_SIZE/8;
-                if (moved_const)
-                {
-                    moved_const = 0;
-                    mem = ones_enc;
-                }
-                if (memcmp(ctr_p, mem, BLOCK_SIZE/8) != 0)
-                {
-                    printf("faulty slice %d!!\n", i);
-                    goto fault;
-                }
-            }
-            ctr_p += BLOCK_SIZE/4;
-        }
-#endif
-
-#ifdef FR_USE_INSTR_CHECKING
-        if (DATA_ERRORS || CONTROL_ERRORS != CONTROL_VALS[FR_ROUNDS - 1])
-        {
-            goto fault;
-        }
-        if (DATA_ERRORS || CONTROL_ERRORS != CONTROL_VALS[FR_ROUNDS - 1])
-        {
-            goto fault;
-        }
-        if (DATA_ERRORS || CONTROL_ERRORS != CONTROL_VALS[FR_ROUNDS - 1])
-        {
-            goto fault;
-        }
-
-        CONTROL_ERRORS = 0;
-        DATA_ERRORS = 0;
-
-#endif
-        goto skip;
-fault:
-
-        fault_handler();
-skip:
-
-        ctr_p = (uint8_t *) ctr;
-
-
-        for(i = 0; i < j; i++)
-        {
-            int k = 16;
-            while (k--)
-            {
-                *outputb++ = *ctr_p++ ^ *inputb++;
-            }
-            frmask >>= 1;
-            if (frmask & 1)
-            {
-                ctr_p += (BLOCK_SIZE/8);
-                frmask >>= 1;
-            }
+            *outputb++ = *ctr_p++ ^ *inputb++;
         }
 
     }
-    while(size > 0);
-    iterations_encrypted = 0;
-
+    while(size);
 }
 
 

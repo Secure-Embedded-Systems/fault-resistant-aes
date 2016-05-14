@@ -5,7 +5,7 @@
 
 #define BLOCK_SIZE          128
 #define KEY_SCHEDULE_SIZE   176
-#define WORD_SIZE           32
+#define WORD_SIZE           64
 #define BS_BLOCK_SIZE       (BLOCK_SIZE * WORD_SIZE / 8)
 #define WORDS_PER_BLOCK     (BLOCK_SIZE / WORD_SIZE)
 
@@ -48,6 +48,9 @@
 void bs_transpose(word_t * blocks);
 void bs_transpose_rev(word_t * blocks);
 void bs_transpose_dst(word_t * transpose, word_t * blocks);
+
+void bs_add_slice(word_t * dst, word_t * block);
+void bs_cipher_dev(word_t _state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_t * key);
 
 void bs_sbox(word_t U[8]);
 void bs_sbox_rev(word_t U[8]);

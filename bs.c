@@ -5,6 +5,7 @@
 
 // temp
 #include "aes.h"
+#include <stdio.h>
 //
 
 #if (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) ||\
@@ -378,6 +379,326 @@ void bs_transpose(word_t * blocks)
     memset(transpose, 0, sizeof(transpose));
     bs_transpose_dst(transpose,blocks);
     memmove(blocks,transpose,sizeof(transpose));
+}
+
+// adds a slice to pipelined transpose dst
+// dst is WORD_SIZE blocks size
+// block is 128 bit block 
+void bs_add_slice(word_t * dst, word_t * block)
+{
+    int i;
+
+    for (i = 0; i < BLOCK_SIZE; i++)
+    {
+        dst[i] <<= 1;
+#ifndef UNROLL_TRANSPOSE
+        int shift = i % WORD_SIZE;
+        dst[i] |= ((block[i / WORD_SIZE] & (ONE << shift)) >> shift);
+#endif
+    }
+#ifdef UNROLL_TRANSPOSE
+    register word_t w0 = block[0];
+
+    dst[0 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[1 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[2 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[3 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[4 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[5 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[6 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[7 ] |= (w0 & 1);
+    w0 >>= 1;
+#if (8%WORD_SIZE == 0)
+#endif
+    dst[8 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[9 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[10] |= (w0 & 1);
+    w0 >>= 1;
+    dst[11] |= (w0 & 1);
+    w0 >>= 1;
+    dst[12] |= (w0 & 1);
+    w0 >>= 1;
+    dst[13] |= (w0 & 1);
+    w0 >>= 1;
+    dst[14] |= (w0 & 1);
+    w0 >>= 1;
+    dst[15] |= (w0 & 1);
+    w0 >>= 1;
+#if (16%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/16];
+#endif
+    dst[16] |= (w0 & 1);
+    w0 >>= 1;
+    dst[17] |= (w0 & 1);
+    w0 >>= 1;
+    dst[18] |= (w0 & 1);
+    w0 >>= 1;
+    dst[19] |= (w0 & 1);
+    w0 >>= 1;
+    dst[20] |= (w0 & 1);
+    w0 >>= 1;
+    dst[21] |= (w0 & 1);
+    w0 >>= 1;
+    dst[22] |= (w0 & 1);
+    w0 >>= 1;
+    dst[23] |= (w0 & 1);
+    w0 >>= 1;
+#if (24%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/24];
+#endif
+    dst[24] |= (w0 & 1);
+    w0 >>= 1;
+    dst[25] |= (w0 & 1);
+    w0 >>= 1;
+    dst[26] |= (w0 & 1);
+    w0 >>= 1;
+    dst[27] |= (w0 & 1);
+    w0 >>= 1;
+    dst[28] |= (w0 & 1);
+    w0 >>= 1;
+    dst[29] |= (w0 & 1);
+    w0 >>= 1;
+    dst[30] |= (w0 & 1);
+    w0 >>= 1;
+    dst[31] |= (w0 & 1);
+    w0 >>= 1;
+#if (32%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/32];
+#endif
+    dst[32] |= (w0 & 1);
+    w0 >>= 1;
+    dst[33] |= (w0 & 1);
+    w0 >>= 1;
+    dst[34] |= (w0 & 1);
+    w0 >>= 1;
+    dst[35] |= (w0 & 1);
+    w0 >>= 1;
+    dst[36] |= (w0 & 1);
+    w0 >>= 1;
+    dst[37] |= (w0 & 1);
+    w0 >>= 1;
+    dst[38] |= (w0 & 1);
+    w0 >>= 1;
+    dst[39] |= (w0 & 1);
+    w0 >>= 1;
+#if (40%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/40];
+#endif
+    dst[40] |= (w0 & 1);
+    w0 >>= 1;
+    dst[41] |= (w0 & 1);
+    w0 >>= 1;
+    dst[42] |= (w0 & 1);
+    w0 >>= 1;
+    dst[43] |= (w0 & 1);
+    w0 >>= 1;
+    dst[44] |= (w0 & 1);
+    w0 >>= 1;
+    dst[45] |= (w0 & 1);
+    w0 >>= 1;
+    dst[46] |= (w0 & 1);
+    w0 >>= 1;
+    dst[47] |= (w0 & 1);
+    w0 >>= 1;
+#if (48%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/48];
+#endif
+    dst[48] |= (w0 & 1);
+    w0 >>= 1;
+    dst[49] |= (w0 & 1);
+    w0 >>= 1;
+    dst[50] |= (w0 & 1);
+    w0 >>= 1;
+    dst[51] |= (w0 & 1);
+    w0 >>= 1;
+    dst[52] |= (w0 & 1);
+    w0 >>= 1;
+    dst[53] |= (w0 & 1);
+    w0 >>= 1;
+    dst[54] |= (w0 & 1);
+    w0 >>= 1;
+    dst[55] |= (w0 & 1);
+    w0 >>= 1;
+#if (56%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/56];
+#endif
+    dst[56] |= (w0 & 1);
+    w0 >>= 1;
+    dst[57] |= (w0 & 1);
+    w0 >>= 1;
+    dst[58] |= (w0 & 1);
+    w0 >>= 1;
+    dst[59] |= (w0 & 1);
+    w0 >>= 1;
+    dst[60] |= (w0 & 1);
+    w0 >>= 1;
+    dst[61] |= (w0 & 1);
+    w0 >>= 1;
+    dst[62] |= (w0 & 1);
+    w0 >>= 1;
+    dst[63] |= (w0 & 1);
+    w0 >>= 1;
+#if (64%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/64];
+#endif
+    dst[64 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[65 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[66 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[67 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[68 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[69 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[70 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[71 ] |= (w0 & 1);
+    w0 >>= 1;
+#if (72%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/72];
+#endif
+    dst[72 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[73 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[74 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[75 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[76 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[77 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[78 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[79 ] |= (w0 & 1);
+    w0 >>= 1;
+#if (80%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/80];
+#endif
+    dst[80 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[81 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[82 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[83 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[84 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[85 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[86 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[87 ] |= (w0 & 1);
+    w0 >>= 1;
+#if (88%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/88];
+#endif
+    dst[88 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[89 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[90 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[91 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[92 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[93 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[94 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[95 ] |= (w0 & 1);
+    w0 >>= 1;
+#if (96%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/96];
+#endif
+    dst[96 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[97 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[98 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[99 ] |= (w0 & 1);
+    w0 >>= 1;
+    dst[100] |= (w0 & 1);
+    w0 >>= 1;
+    dst[101] |= (w0 & 1);
+    w0 >>= 1;
+    dst[102] |= (w0 & 1);
+    w0 >>= 1;
+    dst[103] |= (w0 & 1);
+    w0 >>= 1;
+#if (104%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/104];
+#endif
+    dst[104] |= (w0 & 1);
+    w0 >>= 1;
+    dst[105] |= (w0 & 1);
+    w0 >>= 1;
+    dst[106] |= (w0 & 1);
+    w0 >>= 1;
+    dst[107] |= (w0 & 1);
+    w0 >>= 1;
+    dst[108] |= (w0 & 1);
+    w0 >>= 1;
+    dst[109] |= (w0 & 1);
+    w0 >>= 1;
+    dst[110] |= (w0 & 1);
+    w0 >>= 1;
+    dst[111] |= (w0 & 1);
+    w0 >>= 1;
+#if (112%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/112];
+#endif
+    dst[112] |= (w0 & 1);
+    w0 >>= 1;
+    dst[113] |= (w0 & 1);
+    w0 >>= 1;
+    dst[114] |= (w0 & 1);
+    w0 >>= 1;
+    dst[115] |= (w0 & 1);
+    w0 >>= 1;
+    dst[116] |= (w0 & 1);
+    w0 >>= 1;
+    dst[117] |= (w0 & 1);
+    w0 >>= 1;
+    dst[118] |= (w0 & 1);
+    w0 >>= 1;
+    dst[119] |= (w0 & 1);
+    w0 >>= 1;
+#if (120%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/120];
+#endif
+    dst[120] |= (w0 & 1);
+    w0 >>= 1;
+    dst[121] |= (w0 & 1);
+    w0 >>= 1;
+    dst[122] |= (w0 & 1);
+    w0 >>= 1;
+    dst[123] |= (w0 & 1);
+    w0 >>= 1;
+    dst[124] |= (w0 & 1);
+    w0 >>= 1;
+    dst[125] |= (w0 & 1);
+    w0 >>= 1;
+    dst[126] |= (w0 & 1);
+    w0 >>= 1;
+    dst[127] |= (w0 & 1);
+#endif
 }
 
 void bs_transpose_dst(word_t * transpose, word_t * blocks)
@@ -1158,12 +1479,31 @@ void bs_cipher_faulty(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_
     rng = state[1];
 }
 
-void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
+void bs_cipher_dev(word_t _state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_t * key)
 {
     int round;
-    bs_transpose(state);
+    word_t state[BLOCK_SIZE];
+    memset(state, 0, sizeof(state));
 
-    bs_addroundkey(state,rk[0]);
+    int i,j;
+    
+    for (i = BLOCK_SIZE-2; i > -2; i -= WORDS_PER_BLOCK)
+    {
+        // add key before adding to pipeline
+        for (j=0; j < WORDS_PER_BLOCK; j++)
+        {
+            _state[i+j] ^= key[j];
+        }
+        bs_add_slice(state, _state+i);
+    }
+
+    /*printf("pipeline: \n");*/
+    /*dump_word(state, 128);*/
+
+    
+    //bs_transpose(state);
+
+    /*bs_addroundkey(state,rk[0]);*/
     for (round = 1; round < 10; round++)
     {
         bs_apply_sbox(state);
@@ -1176,6 +1516,34 @@ void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
     bs_shiftrows(state);
     bs_addroundkey(state,rk[10]);
     bs_transpose_rev(state);
+
+    memmove(_state, state, sizeof(state));
+}
+
+void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
+{
+    int round;
+    
+    bs_transpose(state);
+    /*printf("reference: \n");*/
+    /*dump_word(state, 128);*/
+
+
+    bs_addroundkey(state,rk[0]);
+
+    for (round = 1; round < 10; round++)
+    {
+        bs_apply_sbox(state);
+        /*bs_shiftrows(state);*/
+        /*bs_mixcolumns(state);*/
+        bs_shiftmix(state);
+        bs_addroundkey(state,rk[round]);
+    }
+    bs_apply_sbox(state);
+    bs_shiftrows(state);
+    bs_addroundkey(state,rk[10]);
+    bs_transpose_rev(state);
+
 }
 
 void bs_cipher_rev(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
