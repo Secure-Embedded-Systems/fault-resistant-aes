@@ -5,6 +5,7 @@
 
 // temp
 #include "aes.h"
+#include "utils.h"
 #include <stdio.h>
 //
 
@@ -68,9 +69,9 @@ void bs_sbox_rev(word_t U[8])
 {
     word_t W[8];
     word_t
-        T1,T2,T3,T4,T5,T6,T8,
+        T1,T2,T3,T4,T6,T8,
         T9,T10,T13,T14,T15,T16,
-        T17,T18,T19,T20,T22,T23,T24,
+        T17,T19,T20,T22,T23,T24,
         T25, T26, T27;
 
     word_t
@@ -88,7 +89,7 @@ void bs_sbox_rev(word_t U[8])
         P0,P1,P2,P3,P4,P5,P6,P7,P8,
         P9,P10,P11,P12,P13,P14,
         P15,P16,P17,P18,P19,P20,
-        P21,P22,P23,P24,P25,P26,
+        P22,P23,P24,P25,P26,
         P27,P28,P29;
 
     word_t Y5,
@@ -828,7 +829,7 @@ void bs_transpose_dst(word_t * transpose, word_t * blocks)
 
 void bs_transpose_rev(word_t * blocks)
 {
-    int i,k;
+    int k;
     word_t w;
     word_t transpose[BLOCK_SIZE];
     memset(transpose, 0, sizeof(transpose));
@@ -1443,7 +1444,6 @@ void bs_expand_key_dev(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
 
     expand_key(key);
 
-    word_t * rk0 = (word_t *) (key + 0);
     word_t * rk1 = (word_t *) (key + 16);
     word_t * rk2 = (word_t *) (key + 32);
     word_t * rk3 = (word_t *) (key + 48);
@@ -1496,7 +1496,6 @@ void bs_addroundkey_fr(word_t * B, word_t * rk, word_t mask, word_t cmask)
 void bs_cipher_faulty(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_t mask)
 {
     int round;
-    static word_t rng = 0x55;
     bs_transpose(state);
 
     
@@ -1540,7 +1539,6 @@ void bs_cipher_faulty(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_
     bs_addroundkey(state,rk[10]);
 #endif
     bs_transpose_rev(state);
-    rng = state[1];
 }
 
 void bs_cipher_dev(word_t _state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_t * key)

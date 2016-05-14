@@ -50,7 +50,7 @@ static unsigned char rcon(unsigned char in) {
 /* This is the core key expansion, which, given a 4-byte value,
  * does some scrambling */
 static void schedule_core(unsigned char *in, unsigned char i) {
-    char a;
+    unsigned char a;
     /* Rotate the input 8 bits to the left */
     rotate(in);
     /* Apply Rijndael's s-box on all 4 bytes */
