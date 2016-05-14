@@ -381,6 +381,20 @@ void bs_transpose(word_t * blocks)
     memmove(blocks,transpose,sizeof(transpose));
 }
 
+// returns the slice from end of pipeline
+// dst is WORD_SIZE blocks size
+// block is 128 bit block 
+// TODO this isnt transposed
+void bs_get_slice(word_t * src, word_t * block)
+{
+    int i;
+    for (i = 0; i < BLOCK_SIZE; i++)
+    {
+        word_t bit = src[i] & (ONE << 8);
+        block[i] = bit >> 8;
+    }
+}
+
 // adds a slice to pipelined transpose dst
 // dst is WORD_SIZE blocks size
 // block is 128 bit block 
@@ -416,6 +430,7 @@ void bs_add_slice(word_t * dst, word_t * block)
     dst[7 ] |= (w0 & 1);
     w0 >>= 1;
 #if (8%WORD_SIZE == 0)
+    w0 = block[WORD_SIZE/16];
 #endif
     dst[8 ] |= (w0 & 1);
     w0 >>= 1;
@@ -1405,6 +1420,43 @@ void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
     }
 
 }
+
+
+void bs_expand_key_dev(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
+{
+    // TODO integrate this better
+    uint8_t key[KEY_SCHEDULE_SIZE];
+    memmove(key,_key,BLOCK_SIZE/8);
+    memset(rk,0,BLOCK_SIZE * 11);
+
+    expand_key(key);
+
+    word_t * rk0 = (word_t *) key + 0;
+    word_t * rk1 = (word_t *) key + 16;
+    word_t * rk2 = (word_t *) key + 32;
+    word_t * rk3 = (word_t *) key + 48;
+    word_t * rk4 = (word_t *) key + 64;
+    word_t * rk5 = (word_t *) key + 80;
+    word_t * rk6 = (word_t *) key + 96;
+    word_t * rk7 = (word_t *) key + 112;
+    word_t * rk8 = (word_t *) key + 128;
+    word_t * rk9 = (word_t *) key + 144;
+    word_t * rk10 = (word_t *) key + 160;
+
+    bs_add_slice(rk[0],rk9);
+    bs_add_slice(rk[0],rk8);
+    bs_add_slice(rk[0],rk7);
+    bs_add_slice(rk[0],rk6);
+    bs_add_slice(rk[0],rk5);
+    bs_add_slice(rk[0],rk4);
+    bs_add_slice(rk[0],rk3);
+    bs_add_slice(rk[0],rk2);
+    bs_add_slice(rk[0],rk1);
+    bs_add_slice(rk[1],rk10);
+
+
+}
+
 
 void bs_addroundkey_fr(word_t * B, word_t * rk, word_t mask, word_t cmask)
 {

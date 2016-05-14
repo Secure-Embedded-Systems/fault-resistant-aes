@@ -1,6 +1,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "aes.h"
 #include "bs.h"
 #include "utils.h"
@@ -192,39 +193,120 @@ static void __debug(char * line, int num)
     fprintf(stderr, "%s: %d\n",line, num);
 }
 
+static void yield(uint8_t * outputb, uint8_t * ctr_p, int chunk)
+{
+
+}
+
 void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv,
         word_t (* rk)[BLOCK_SIZE])
 {
     word_t ctr[BLOCK_SIZE];
     uint8_t iv_copy[BLOCK_SIZE/8];
+    word_t state[BLOCK_SIZE];
+    word_t last[BLOCK_SIZE];
     
     memset(outputb,0,size);
     memset(ctr,0,sizeof(ctr));
     memmove(iv_copy,iv,BLOCK_SIZE/8);
+    int offset = 0;
+
 
     do
     {
         int chunk = MIN(size, BS_BLOCK_SIZE);
         int blocks = chunk / (BLOCK_SIZE/8);
+        memset(state, 0, sizeof(state));
         if (chunk % (BLOCK_SIZE/8))
         {
             blocks++;
         }
 
-        int i;
+        int i,j,k = 0;
         for (i = 0; i < blocks; i++)
         {
             memmove(ctr + (i * WORDS_PER_BLOCK), iv_copy, BLOCK_SIZE/8);
             INC_CTR(iv_copy,1);
         }
 
-        bs_cipher_dev(ctr, rk, (word_t * )key);
-        size -= chunk;
+        for (i = blocks-1; i > -1; i--)
+        {
+            word_t * block = ctr + i * WORDS_PER_BLOCK;
+            for (j=0; j < WORDS_PER_BLOCK; j++)
+            {
+                block[j] ^= ((word_t*)key)[j];
+            }
+            bs_add_slice(state, block);
 
-        uint8_t * ctr_p = (uint8_t *) ctr;
+            bs_apply_sbox(state);
+            bs_shiftmix(state);
+            bs_addroundkey(state,rk[0]);
+            k++;
+
+
+            if (k >= 9)
+            {
+                bs_get_slice(state, last);
+                bs_apply_sbox(last);
+                bs_shiftrows(last);
+                bs_addroundkey(last,rk[1]);
+                bs_transpose_rev(last);
+
+                dump_word(last,128);
+
+                memmove(outputb + offset, last, 16);
+                offset += 16;
+
+            }
+        }
+
+        if (k >= 9)
+        {
+            for(k=0; k < 8; k++)
+            {
+                bs_add_slice(state, (word_t *)ones_block);
+
+                bs_apply_sbox(state);
+                bs_shiftmix(state);
+                bs_addroundkey(state,rk[0]);
+
+                bs_get_slice(state, last);
+                bs_apply_sbox(last);
+                bs_shiftrows(last);
+                bs_addroundkey(last,rk[1]);
+                bs_transpose_rev(last);
+
+                memmove(outputb + offset, last, 16);
+                offset += 16;
+
+            }
+        }
+
+        /*int round;*/
+        /*for (round = 1; round < 10; round++)*/
+        /*{*/
+            /*bs_apply_sbox(state);*/
+            /*[>bs_shiftrows(state);<]*/
+            /*[>bs_mixcolumns(state);<]*/
+            /*bs_shiftmix(state);*/
+            /*bs_addroundkey(state,rk[round]);*/
+        /*}*/
+        /*bs_apply_sbox(state);*/
+        /*bs_shiftrows(state);*/
+        /*bs_addroundkey(state,rk[10]);*/
+        /*bs_transpose_rev(state);*/
+
+        /*bs_cipher_dev(ctr, rk, (word_t * )key);*/
+        
+        printf("chunk == %d, offset == %d\n",chunk,offset);
+        /*assert(chunk == offset);*/
+        size -= chunk;
+        /*offset = 0;*/
+
+        uint8_t * ctr_p = (uint8_t *) state;
         while(chunk--)
         {
-            *outputb++ = *ctr_p++ ^ *inputb++;
+            *outputb++ ^= *inputb++;
         }
 
     }

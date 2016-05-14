@@ -59,7 +59,7 @@ void aes_ctr_test()
         "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
 #ifndef TEST_FOOTPRINT
-#define vector_size 2000
+#define vector_size 1024
 #else
 #define vector_size 32
 #endif
@@ -81,6 +81,9 @@ void aes_ctr_test()
 
     word_t rk[11][BLOCK_SIZE];
     bs_expand_key(rk, key_vector);
+    
+    word_t rk_dev[11][BLOCK_SIZE];
+    bs_expand_key_dev(rk_dev, key_vector);
 
     printf("AES CTR\n");
 
@@ -89,13 +92,13 @@ void aes_ctr_test()
     printf("iv: ");
     dump_hex(iv_vector, 16);
 
-    aes_ctr_encrypt_fr(output, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk);
+    aes_ctr_encrypt_fr(output, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk_dev);
     
 #ifndef TEST_FOOTPRINT
     aes_ctr_encrypt(ct_vector, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk);
 #endif
 
-    aes_ctr_decrypt_fr(input,output,sizeof(pt_vector),key_vector, iv_vector, rk);
+    aes_ctr_decrypt_fr(input,output,sizeof(pt_vector),key_vector, iv_vector, rk_dev);
 
 #ifndef TEST_FOOTPRINT
     if (memcmp(pt_vector, input, sizeof(pt_vector)) != 0)
@@ -106,6 +109,10 @@ void aes_ctr_test()
     else if (memcmp(ct_vector, output, sizeof(pt_vector)) != 0)
     {
         fprintf(stderr,"error: ciphertext is not the same as the test vector\n");
+        printf("correct:\n");
+        dump_hex(ct_vector,vector_size);
+        printf("wrong:\n");
+        dump_hex(output,vector_size);
         exit(1);
     }
     else
