@@ -4,10 +4,10 @@ obj = $(src:.c=.o)
 LDFLAGS = -Wl,--gc-sections
 
 # performance
-#CFLAGS = -O3 -fdata-sections -ffunction-sections -DUNROLL_TRANSPOSE -Wall
+CFLAGS = -O3 -fdata-sections -ffunction-sections -DUNROLL_TRANSPOSE -Wall
 
 # footprint
-CFLAGS = -O2 -fdata-sections -ffunction-sections -Wall
+#CFLAGS = -O2 -fdata-sections -ffunction-sections -Wall
 
 #CC=sparc-elf-gcc
 CC=gcc
