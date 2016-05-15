@@ -64,7 +64,7 @@ void aes_ctr_test()
         "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
 #ifndef TEST_FOOTPRINT
-#define vector_size (3*16)
+#define vector_size (9*16)
 #else
 #define vector_size (2*16)
 #endif

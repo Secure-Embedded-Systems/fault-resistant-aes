@@ -163,20 +163,21 @@ void fault_handler()
         FR_ROUNDS++;
     }
     /*printf("blocks_encrypted: %d\n", blocks_encrypted);*/
-    /*printf("iterations_encrypted: %d\n", iterations_encrypted);*/
+    printf("iterations_encrypted: %d\n", iterations_encrypted);
 }
 
-#define INIT_SHIFT 29
-#define ROOT_BIT (29 + INIT_SHIFT)
-#define START_BIT (0 + INIT_SHIFT)
-
-#define BIT_CFAULT  (ROOT_BIT % WORD_SIZE)
-#define BIT_DFAULT  ((ROOT_BIT - 2) % WORD_SIZE)
-#define BIT_DATA    ((ROOT_BIT - 1) % WORD_SIZE)
+#define INIT_SHIFT 0
 
 #define BS_DATA_MASK_UNSHIFTED 0x7ffffff
-word_t BS_DATA_MASK = (BS_DATA_MASK_UNSHIFTED  << INIT_SHIFT) |
-                      (BS_DATA_MASK_UNSHIFTED  >> (WORD_SIZE - INIT_SHIFT));
+word_t BS_DATA_MASK = BS_DATA_MASK_UNSHIFTED;
+
+int ROOT_BIT = 29 + INIT_SHIFT;
+int START_BIT = 0;
+
+int BIT_CFAULT = ((29) % WORD_SIZE);
+int BIT_DFAULT = ((29 - 2) % WORD_SIZE);
+int BIT_DATA   = ((29 - 1) % WORD_SIZE);
+
 
 
 static void check_dfault(word_t * state, uint8_t * ciphertext)
@@ -190,6 +191,7 @@ static void check_dfault(word_t * state, uint8_t * ciphertext)
         dump_hex((uint8_t*)redun, 16);
     }
 }
+
 static void check_cfault(word_t * state)
 {
     word_t redun[WORDS_PER_BLOCK];
@@ -202,7 +204,7 @@ static void check_cfault(word_t * state)
     }
 }
 
-static void shift_rk(word_t * rk, int shift)
+void shift_rk(word_t * rk, int shift)
 {
     int i;
     for(i = 0; i < BLOCK_SIZE; i++)
@@ -210,6 +212,22 @@ static void shift_rk(word_t * rk, int shift)
         rk[i] = rotl(rk[i],shift);
     }
 
+    BS_DATA_MASK = rotl(BS_DATA_MASK,shift);
+
+    START_BIT += shift;
+    START_BIT %= WORD_SIZE;
+
+    BIT_CFAULT += shift;
+    BIT_CFAULT %= WORD_SIZE;
+
+    BIT_DFAULT += shift;
+    BIT_DFAULT %= WORD_SIZE;
+
+    BIT_DATA += shift;
+    BIT_DATA %= WORD_SIZE;
+
+    /*CURRENT_SHIFT = shift;*/
+    /*CURRENT_SHIFT %= WORD_SIZE;*/
 }
 
 void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv, word_t * rk)
@@ -230,10 +248,9 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
     {
         blocks++;
     }
+    shift_rk(rk, inputb[0] & 0x1f);
 
     int i,j = 0;
-
-    shift_rk(rk, INIT_SHIFT);
 
     // run pipeline
     for (i = 0; i < blocks; i++)
@@ -254,7 +271,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
         }
         INC_CTR((uint8_t *)iv_copy,1);
 
-        // 19 cycles/byte
+        // 19 cycles/byte for each
         bs_add_slice(state, (word_t *)ones_block,START_BIT);
         bs_add_slice(state, block_tmp,START_BIT);
         bs_add_slice(state, block_tmp,START_BIT);
@@ -313,7 +330,6 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
     {
         outputb[offset] ^= inputb[offset];
     }
-    shift_rk(rk, WORD_SIZE-INIT_SHIFT);
 
 }
 
