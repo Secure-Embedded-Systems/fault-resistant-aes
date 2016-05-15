@@ -13,7 +13,7 @@ constant slices for detection of fault injections.
 Current results
 -----------------
 
-## For (1) countermeasure
+## Countermeasure 1: shuffled
 
 Performance measurements done for a fault resistant AES-CTR on a 64 bit 4 GHz Intel 4790 and compiled with GCC 4.8.4.
 Overhead was calculated in reference to the [(unprotected) bitsliced implementation](https://github.com/conorpp/bitsliced-aes).
@@ -38,7 +38,7 @@ to at first have a small fault detection at first to optimize performance but th
 dynamically in the advent of a fault injection.
 
 
-## For (2) countermeasure
+## Countermeasure 2: pipelined
 
 Performance measurements were done on 64 bit intel 4790 but used a 32 bit word length.
 
@@ -49,7 +49,7 @@ Performance measurements were done on 64 bit intel 4790 but used a 32 bit word l
 
 
 
-## For (3) countermeasure
+## Countermeasure 3: shuffled pipelined
 
 Performance measurements were done on 64 bit intel 4790 but used a 32 bit word length.
 
