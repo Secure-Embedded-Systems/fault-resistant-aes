@@ -27,7 +27,7 @@ void dump_block(word_t * h, int len)
     {
         word_t u1 = *h++;
         word_t u2 = *h++;
-        printf("%02d: %"WFMT": %" WPAD WFMT"%" WPAD WFMT  "\n",i++,(word_t)h,u1,u2);
+        printf("%02d: %lx: %" WPAD WFMT"%" WPAD WFMT  "\n",i++,(uint64_t)h,u1,u2);
     }
     printf("\n");
     fflush(stdout);

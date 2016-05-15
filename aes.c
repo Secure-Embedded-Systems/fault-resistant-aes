@@ -14,6 +14,12 @@
 #include <stdio.h>
 #endif
 
+#define debug() __debug(__FILE__, __LINE__)
+/*static void __debug(char * line, int num)*/
+/*{*/
+    /*fprintf(stderr, "%s: %d\n",line, num);*/
+/*}*/
+
 void dump_round(word_t * r,int roud);
 void bs_mixcolumns_ref(word_t * B);
 
@@ -138,7 +144,7 @@ void aes_ctr_encrypt_ref(uint8_t * outputb, uint8_t * inputb, size_t size, uint8
 
 static int num_rbits = (FR_STARTING_R_BITS+1);
 static uint8_t rng_seed = 0x55;
-static uint8_t ones_block[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
+/*static uint8_t ones_block[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";*/
 volatile uint8_t ones_enc[] = "\x8a\xf2\x86\x01\x42\xf7\x86\xf4\x09\x30\x7c\x1a\x3f\x7e\xaa\xac";
 static int iterations_encrypted = 0;
 
@@ -192,12 +198,6 @@ word_t fr_get_mask()
 
 #define fr_seed_mask(seed) (rng_seed ^= (seed))
 
-#define debug() __debug(__FILE__, __LINE__)
-/*static void __debug(char * line, int num)*/
-/*{*/
-    /*fprintf(stderr, "%s: %d\n",line, num);*/
-/*}*/
-
 
 void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv, word_t * rk)
 {
@@ -225,6 +225,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
 
         if (i > (BS_DATA_ROUNDS-1))
         {
+            // 13 cycles/byte
             bs_get_slice(state, (word_t*)(outputb + offset));
             offset += 16;
         }
@@ -235,12 +236,17 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
         }
         INC_CTR((uint8_t *)iv_copy,1);
 
+        // 19 cycles/byte
         bs_add_slice(state, block_tmp);
 
+        // 84 cycles/byte
         bs_apply_sbox(state);
+        // 9 cycles/byte
         bs_shiftrows(state);
+        // 38 cycles/byte
         bs_mixcolumns(state);
 
+        // 9 cycles/byte
         bs_addroundkey(state,rk);
 
     }
@@ -249,7 +255,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
 
     for (; i < BS_DATA_ROUNDS; i++)
     {
-        bs_add_slice(state, (word_t *)ones_block);
+        bs_add_slice(state, NULL);
 
         bs_apply_sbox(state);
         bs_shiftrows(state);
@@ -263,7 +269,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
         bs_get_slice(state, (word_t*)(outputb + offset));
         offset += 16;
 
-        bs_add_slice(state, (word_t *)ones_block);
+        bs_add_slice(state, NULL);
         bs_apply_sbox(state);
         bs_shiftrows(state);
         bs_mixcolumns(state);
