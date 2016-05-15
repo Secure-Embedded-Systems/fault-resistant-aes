@@ -204,6 +204,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
     word_t iv_copy[WORDS_PER_BLOCK];
     word_t state[BLOCK_SIZE];
     word_t block_tmp[WORDS_PER_BLOCK];
+    /*word_t redun[BLOCK_SIZE];*/
     
     memset(outputb,0,size);
     memmove(iv_copy,iv,BLOCK_SIZE/8);
@@ -238,6 +239,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
 
         // 19 cycles/byte
         bs_add_slice(state, block_tmp);
+        bs_add_slice(state, block_tmp);
 
         // 84 cycles/byte
         bs_apply_sbox(state);
@@ -256,6 +258,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
     for (; i < BS_DATA_ROUNDS; i++)
     {
         bs_add_slice(state, NULL);
+        bs_add_slice(state, NULL);
 
         bs_apply_sbox(state);
         bs_shiftrows(state);
@@ -269,6 +272,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
         bs_get_slice(state, (word_t*)(outputb + offset));
         offset += 16;
 
+        bs_add_slice(state, NULL);
         bs_add_slice(state, NULL);
         bs_apply_sbox(state);
         bs_shiftrows(state);
