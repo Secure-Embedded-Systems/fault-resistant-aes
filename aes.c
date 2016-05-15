@@ -142,27 +142,21 @@ void aes_ctr_encrypt_ref(uint8_t * outputb, uint8_t * inputb, size_t size, uint8
 
 }
 
-static int num_rbits = (FR_STARTING_R_BITS+1);
-static uint8_t rng_seed = 0x55;
 static uint8_t ones_block[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
 static uint8_t ones_enc[] = 
     "\xa9\x0f\x26\xc7\xf1\x48\xd9\x15\x58\x67\xb8\xd6\x6d\x58\x60\x1e";
 static int iterations_encrypted = 0;
 
 //                          1,    2,    3,    4,    5,     6,     7,     8,     9,     10
-uint16_t CONTROL_VALS[10] = {0x3d, 0x88, 0xc1, 0xfb, 0x131, 0x175, 0x1b4, 0x1f8, 0x231, 0x271};
 
-uint8_t FR_ROUNDS = FR_STARTING_ROUNDS;
 volatile word_t DATA_ERRORS = 0;
 volatile word_t CONTROL_ERRORS = 0;
-word_t CONTROL_SHIFT;
 
 
 void fault_handler()
 {
     DATA_ERRORS = 0;
 
-    num_rbits += FR_INCREMENT;
     if (FR_ROUNDS < 10)
     {
         CONTROL_ERRORS = CONTROL_VALS[FR_ROUNDS];
@@ -170,55 +164,52 @@ void fault_handler()
     }
     /*printf("blocks_encrypted: %d\n", blocks_encrypted);*/
     /*printf("iterations_encrypted: %d\n", iterations_encrypted);*/
-    if (num_rbits > 20)
-    {
-        printf("iterations_encrypted: %d\n", iterations_encrypted);
-        fprintf(stderr, "over 20 faults detected, giving up!\n");
-        exit(2);
-    }
 }
 
-word_t fr_get_mask()
-{
-    word_t mask = 0;
-    int i = num_rbits;
-    int evenbits = (num_rbits + ((~num_rbits) & 1));
+#define INIT_SHIFT 29
+#define ROOT_BIT (29 + INIT_SHIFT)
+#define START_BIT (0 + INIT_SHIFT)
 
-    rng_seed |= (~rng_seed) & 1;
+#define BIT_CFAULT  (ROOT_BIT % WORD_SIZE)
+#define BIT_DFAULT  ((ROOT_BIT - 2) % WORD_SIZE)
+#define BIT_DATA    ((ROOT_BIT - 1) % WORD_SIZE)
 
-    do
-    {
-        mask |= (ONE << (rng_seed & BS_2_MASK));
-        int j = evenbits;
-        rng_seed +=  (j<<1);
-    }
-    while(--i);
+#define BS_DATA_MASK_UNSHIFTED 0x7ffffff
+word_t BS_DATA_MASK = (BS_DATA_MASK_UNSHIFTED  << INIT_SHIFT) |
+                      (BS_DATA_MASK_UNSHIFTED  >> (WORD_SIZE - INIT_SHIFT));
 
-    return mask;
-}
-
-#define fr_seed_mask(seed) (rng_seed ^= (seed))
 
 static void check_dfault(word_t * state, uint8_t * ciphertext)
 {
     word_t redun[WORDS_PER_BLOCK];
     memset(redun,0,sizeof(redun));
-    bs_get_slice(state, redun);
+    bs_get_slice(state, redun, BIT_DFAULT);
     if (memcmp(redun, ciphertext - 16, 16) != 0)
     {
         printf("D FAULT!\n");
+        dump_hex((uint8_t*)redun, 16);
     }
 }
 static void check_cfault(word_t * state)
 {
     word_t redun[WORDS_PER_BLOCK];
     memset(redun,0,sizeof(redun));
-    bs_get_slice(state, redun);
+    bs_get_slice(state, redun, BIT_CFAULT);
     if (memcmp(redun, ones_enc, 16) != 0)
     {
         printf("C FAULT!\n");
         dump_hex((uint8_t*)redun, 16);
     }
+}
+
+static void shift_rk(word_t * rk, int shift)
+{
+    int i;
+    for(i = 0; i < BLOCK_SIZE; i++)
+    {
+        rk[i] = rotl(rk[i],shift);
+    }
+
 }
 
 void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv, word_t * rk)
@@ -242,6 +233,8 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
 
     int i,j = 0;
 
+    shift_rk(rk, INIT_SHIFT);
+
     // run pipeline
     for (i = 0; i < blocks; i++)
     {
@@ -250,6 +243,9 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
         {
             // 13 cycles/byte
             check_cfault(state);
+            bs_get_slice(state, (word_t*)(outputb + offset),BIT_DATA);
+            offset += 16;
+            check_dfault(state, outputb + offset);
         }
 
         for (j=0; j < WORDS_PER_BLOCK; j++)
@@ -259,24 +255,9 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
         INC_CTR((uint8_t *)iv_copy,1);
 
         // 19 cycles/byte
-        bs_add_slice(state, (word_t *)ones_block,1);
-
-        if (i > (BS_DATA_ROUNDS-1))
-        {
-            bs_get_slice(state, (word_t*)(outputb + offset));
-            offset += 16;
-        }
-
-        bs_add_slice(state, block_tmp,1);
-
-        if (i > (BS_DATA_ROUNDS-1))
-        {
-            // 13 cycles/byte
-            check_dfault(state, outputb + offset);
-        }
-
-
-        bs_add_slice(state, block_tmp,1);
+        bs_add_slice(state, (word_t *)ones_block,START_BIT);
+        bs_add_slice(state, block_tmp,START_BIT);
+        bs_add_slice(state, block_tmp,START_BIT);
 
         // 84 cycles/byte
         bs_apply_sbox(state);
@@ -295,9 +276,9 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
     // advance pipeline if it is not full
     for (; i < BS_DATA_ROUNDS; i++)
     {
-        bs_add_slice(state, NULL,1);
-        bs_add_slice(state, NULL,1);
-        bs_add_slice(state, NULL,1);
+        bs_add_slice(state, NULL,START_BIT);
+        bs_add_slice(state, NULL,START_BIT);
+        bs_add_slice(state, NULL,START_BIT);
 
         bs_apply_sbox(state);
         bs_shiftrows(state);
@@ -312,19 +293,14 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
 
         {
             check_cfault(state);
-        }
-
-        bs_add_slice(state, NULL,1);
-
-        bs_get_slice(state, (word_t*)(outputb + offset));
-        offset += 16;
-
-        bs_add_slice(state, NULL,1);
-        {
-            // 13 cycles/byte
+            bs_get_slice(state, (word_t*)(outputb + offset), BIT_DATA);
+            offset += 16;
             check_dfault(state, outputb + offset);
         }
-        bs_add_slice(state, NULL,1);
+
+        bs_add_slice(state, NULL,START_BIT);
+        bs_add_slice(state, NULL,START_BIT);
+        bs_add_slice(state, NULL,START_BIT);
 
         bs_apply_sbox(state);
         bs_shiftrows(state);
@@ -337,6 +313,7 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
     {
         outputb[offset] ^= inputb[offset];
     }
+    shift_rk(rk, WORD_SIZE-INIT_SHIFT);
 
 }
 

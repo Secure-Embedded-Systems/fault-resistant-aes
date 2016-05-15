@@ -9,7 +9,7 @@
 #define BS_BLOCK_SIZE       (BLOCK_SIZE * WORD_SIZE / 8)
 #define WORDS_PER_BLOCK     (BLOCK_SIZE / WORD_SIZE)
 #define BS_DATA_ROUNDS 10
-#define BS_DATA_MASK (0x7ffffff)
+
 
 #if (WORD_SIZE==64)
     typedef uint64_t    word_t;
@@ -47,12 +47,15 @@
 #error "invalid word size"
 #endif
 
+extern word_t BS_DATA_MASK;
+
 void bs_transpose(word_t * blocks);
 void bs_transpose_rev(word_t * blocks);
 void bs_transpose_dst(word_t * transpose, word_t * blocks);
 
-void bs_add_slice(word_t * dst, word_t * block, int amt);
-void bs_get_slice(word_t * dst, word_t * block);
+void bs_add_slice(word_t * dst, word_t * block, int indx);
+void bs_get_slice(word_t * src, word_t * block, int indx);
+word_t rotl(word_t val, int shift);
 void bs_cipher_dev(word_t _state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_t * key);
 
 void bs_sbox(word_t U[8]);
