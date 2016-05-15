@@ -50,8 +50,6 @@ Performance measurements were done on 64 bit intel 4790 but used a 32 bit word l
 <b id="f1">1</b> Footprint is actually smaller because the transpose is simplified [↩](#a1)
 
 
-Performance could be improved by about 5-10x by writing in assembly and ensuring
-more operations stay in registers rather then spill to memory.
 
 
 Compiling
