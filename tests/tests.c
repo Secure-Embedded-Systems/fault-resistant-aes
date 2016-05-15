@@ -64,22 +64,23 @@ void aes_ctr_test()
         "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
 #ifndef TEST_FOOTPRINT
-#define vector_size (32)
+#define vector_size (7*16)
 #else
-#define vector_size 32
+#define vector_size (2*16)
 #endif
+    uint8_t pt_vector[vector_size];
+    uint8_t ct_vector[vector_size];
 
-    /*uint8_t pt_vector[vector_size];*/
-    /*uint8_t ct_vector[vector_size];*/
+    /*uint8_t * pt_vector = (uint8_t*)malloc(vector_size);*/
+    /*uint8_t * ct_vector = (uint8_t*)malloc(vector_size);*/
+    /*uint8_t * output = (uint8_t*)malloc(vector_size+32);*/
+    /*uint8_t * input = (uint8_t*)malloc(vector_size+32);*/
 
-    uint8_t * pt_vector = (uint8_t*)malloc(vector_size);
-    uint8_t * ct_vector = (uint8_t*)malloc(vector_size);
-    uint8_t * output = (uint8_t*)malloc(vector_size+32);
-    uint8_t * input = (uint8_t*)malloc(vector_size+32);
+    uint8_t output[(vector_size)+32];
+    uint8_t input[(vector_size)+32];
 
-    /*uint8_t output[(vector_size)+32];*/
-    /*uint8_t input[(vector_size)+32];*/
 
+#ifndef TEST_FOOTPRINT
 #define FILL_RANDOM
 #ifdef FILL_RANDOM
 
@@ -97,10 +98,16 @@ void aes_ctr_test()
 
 #endif
 
+
+#else
+#define vector_size 32
+#endif
+#ifndef TEST_FOOTPRINT
     word_t rk[11][BLOCK_SIZE];
     bs_expand_key(rk, key_vector);
+#endif
     
-    word_t rk_dev[11][BLOCK_SIZE];
+    word_t rk_dev[2][BLOCK_SIZE];
     bs_expand_key_dev(rk_dev[0], key_vector);
 
     printf("AES CTR\n");

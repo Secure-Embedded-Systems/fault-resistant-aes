@@ -13,6 +13,7 @@ constant slices for detection of fault injections.
 Current results
 -----------------
 
+## For (1) countermeasure
 
 Performance measurements done for a fault resistant AES-CTR on a 64 bit 4 GHz Intel 4790 and compiled with GCC 4.8.4.
 Overhead was calculated in reference to the [(unprotected) bitsliced implementation](https://github.com/conorpp/bitsliced-aes).
@@ -32,15 +33,24 @@ Overhead was calculated in reference to the [(unprotected) bitsliced implementat
 |Performance optimized |  12,708 bytes  |    4.6%  |111.8 cycles/byte|  119.2%  |
 |Footprint optimized   |  9,428 bytes   |    10.6% |166.9 cycles/byte|  106.0%  |
 
-
-
 The amount of redundant slices and number of rounds to check are decided during run time.  The idea is
 to at first have a small fault detection at first to optimize performance but then increase redundancy
 dynamically in the advent of a fault injection.
 
 
+## For (2) countermeasure
 
-Performance could be improved by about 5-10x by writting in assembly and ensuring
+Performance measurements were done on 64 bit intel 4790 but used a 32 bit word length.
+
+|                      |footprint       | overhead | throughput     | overhead |
+|----------------------|----------------|----------|----------------|----------|
+|Performance optimized |  19,189 bytes  |  57.9%    | 223 cycles/byte |   218.5%   |
+|Footprint optimized   |  8,157 bytes   |   -4.3% <sup id="a1">[1](#f1)</sup>  | 373 cycles/byte |   432.9%   |
+
+<b id="f1">1</b> Footprint is actually smaller because the transpose is simplified [↩](#a1)
+
+
+Performance could be improved by about 5-10x by writing in assembly and ensuring
 more operations stay in registers rather then spill to memory.
 
 

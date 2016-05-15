@@ -9,7 +9,7 @@
 #define BS_BLOCK_SIZE       (BLOCK_SIZE * WORD_SIZE / 8)
 #define WORDS_PER_BLOCK     (BLOCK_SIZE / WORD_SIZE)
 #define BS_DATA_ROUNDS 10
-#define BS_DATA_MASK (0x3ffff)
+#define BS_DATA_MASK (0x7ffffff)
 
 #if (WORD_SIZE==64)
     typedef uint64_t    word_t;
