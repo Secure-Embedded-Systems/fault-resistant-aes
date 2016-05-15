@@ -397,19 +397,18 @@ void bs_transpose(word_t * blocks)
 // returns the slice from end of pipeline
 // dst is WORD_SIZE blocks size
 // block is 128 bit block 
-// TODO this isnt transposed
+#define BS_DATA_ROUNDS2 ((BS_DATA_ROUNDS)*2-1)
 void bs_get_slice(word_t * src, word_t * block)
 {
 #ifndef UNROLL_TRANSPOSE
     int i;
     for (i = 0; i < BLOCK_SIZE; i++)
     {
-        word_t bit = (src[i] & (ONE << (BS_DATA_ROUNDS-1))) >> (BS_DATA_ROUNDS -1);
+        word_t bit = (src[i] & (ONE << (BS_DATA_ROUNDS2))) >> (BS_DATA_ROUNDS2);
         /*block[i] = bit >> (BS_DATA_ROUNDS-1);*/
         block[i/WORD_SIZE] |=  (bit << (i % WORD_SIZE));
     }
 #else
-#define BS_DATA_ROUNDS2 ((BS_DATA_ROUNDS)*2-1)
     block[0 /WORD_SIZE] |= ((src[0 ] & ( ONE << (BS_DATA_ROUNDS2))) >> (BS_DATA_ROUNDS2)) << (0 % WORD_SIZE);
     block[1 /WORD_SIZE] |= ((src[1 ] & ( ONE << (BS_DATA_ROUNDS2))) >> (BS_DATA_ROUNDS2)) << (1 % WORD_SIZE);
     block[2 /WORD_SIZE] |= ((src[2 ] & ( ONE << (BS_DATA_ROUNDS2))) >> (BS_DATA_ROUNDS2)) << (2 % WORD_SIZE);
@@ -545,7 +544,7 @@ void bs_get_slice(word_t * src, word_t * block)
 // adds a slice to pipelined transpose dst
 // dst is WORD_SIZE blocks size
 // block is 128 bit block 
-void bs_add_slice(word_t * dst, word_t * block)
+void bs_add_slice(word_t * dst, word_t * block, int amt)
 {
     int i;
 
@@ -563,14 +562,14 @@ void bs_add_slice(word_t * dst, word_t * block)
     {
         for (i = 0; i < BLOCK_SIZE; i++)
         {
-            dst[i] <<= 1;
+            dst[i] <<= amt;
         }
     }
 #endif
 #ifdef UNROLL_TRANSPOSE
     for (i = 0; i < BLOCK_SIZE; i++)
     {
-        dst[i] <<= 1;
+        dst[i] <<= amt;
     }
 
     if (block == NULL)
@@ -815,7 +814,6 @@ void bs_transpose_rev(word_t * blocks)
     for(k=0; k < BLOCK_SIZE; k++)
     {
         w = blocks[k];
-        word_t bitpos = bs2be(ONE << (k % WORD_SIZE));
         word_t offset = k / WORD_SIZE;
 #ifndef UNROLL_TRANSPOSE
         int j;
@@ -825,6 +823,7 @@ void bs_transpose_rev(word_t * blocks)
             transpose[j * WORDS_PER_BLOCK + (offset)] |= bit;
         }
 #else
+        word_t bitpos = bs2be(ONE << (k % WORD_SIZE));
         transpose[0  * WORDS_PER_BLOCK + (offset )] |= (w & (ONE << 0 )) ? bitpos : 0;
         transpose[1  * WORDS_PER_BLOCK + (offset )] |= (w & (ONE << 1 )) ? bitpos : 0;
         transpose[2  * WORDS_PER_BLOCK + (offset )] |= (w & (ONE << 2 )) ? bitpos : 0;
@@ -1572,26 +1571,26 @@ void bs_expand_key_dev(word_t * rk, uint8_t * _key)
     word_t * rk9 = (word_t *) (key + 144);
     word_t * rk10 = (word_t *) (key + 160);
 
-    bs_add_slice(rk,rk10);
-    bs_add_slice(rk,rk10);
-    bs_add_slice(rk,rk9);
-    bs_add_slice(rk,rk9);
-    bs_add_slice(rk,rk8);
-    bs_add_slice(rk,rk8);
-    bs_add_slice(rk,rk7);
-    bs_add_slice(rk,rk7);
-    bs_add_slice(rk,rk6);
-    bs_add_slice(rk,rk6);
-    bs_add_slice(rk,rk5);
-    bs_add_slice(rk,rk5);
-    bs_add_slice(rk,rk4);
-    bs_add_slice(rk,rk4);
-    bs_add_slice(rk,rk3);
-    bs_add_slice(rk,rk3);
-    bs_add_slice(rk,rk2);
-    bs_add_slice(rk,rk2);
-    bs_add_slice(rk,rk1);
-    bs_add_slice(rk,rk1);
+    bs_add_slice(rk,rk10,1);
+    bs_add_slice(rk,rk10,1);
+    bs_add_slice(rk,rk9,1);
+    bs_add_slice(rk,rk9,1);
+    bs_add_slice(rk,rk8,1);
+    bs_add_slice(rk,rk8,1);
+    bs_add_slice(rk,rk7,1);
+    bs_add_slice(rk,rk7,1);
+    bs_add_slice(rk,rk6,1);
+    bs_add_slice(rk,rk6,1);
+    bs_add_slice(rk,rk5,1);
+    bs_add_slice(rk,rk5,1);
+    bs_add_slice(rk,rk4,1);
+    bs_add_slice(rk,rk4,1);
+    bs_add_slice(rk,rk3,1);
+    bs_add_slice(rk,rk3,1);
+    bs_add_slice(rk,rk2,1);
+    bs_add_slice(rk,rk2,1);
+    bs_add_slice(rk,rk1,1);
+    bs_add_slice(rk,rk1,1);
 
 }
 

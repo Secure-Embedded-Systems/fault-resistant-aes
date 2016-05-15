@@ -198,13 +198,23 @@ word_t fr_get_mask()
 
 #define fr_seed_mask(seed) (rng_seed ^= (seed))
 
+static void check_fault(word_t * state, uint8_t * ciphertext)
+{
+    word_t redun[WORDS_PER_BLOCK];
+    memset(redun,0,sizeof(redun));
+    bs_get_slice(state, redun);
+    if (memcmp(redun, ciphertext - 16, 16) != 0)
+    {
+        printf("FAULT!\n");
+    }
+}
+
 
 void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv, word_t * rk)
 {
     word_t iv_copy[WORDS_PER_BLOCK];
     word_t state[BLOCK_SIZE];
     word_t block_tmp[WORDS_PER_BLOCK];
-    /*word_t redun[BLOCK_SIZE];*/
     
     memset(outputb,0,size);
     memmove(iv_copy,iv,BLOCK_SIZE/8);
@@ -238,8 +248,14 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
         INC_CTR((uint8_t *)iv_copy,1);
 
         // 19 cycles/byte
-        bs_add_slice(state, block_tmp);
-        bs_add_slice(state, block_tmp);
+        bs_add_slice(state, block_tmp,1);
+        if (i > (BS_DATA_ROUNDS-1))
+        {
+            // 13 cycles/byte
+            check_fault(state, outputb + offset);
+        }
+
+        bs_add_slice(state, block_tmp,1);
 
         // 84 cycles/byte
         bs_apply_sbox(state);
@@ -257,8 +273,8 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
 
     for (; i < BS_DATA_ROUNDS; i++)
     {
-        bs_add_slice(state, NULL);
-        bs_add_slice(state, NULL);
+        bs_add_slice(state, NULL,1);
+        bs_add_slice(state, NULL,1);
 
         bs_apply_sbox(state);
         bs_shiftrows(state);
@@ -272,16 +288,19 @@ void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * ke
         bs_get_slice(state, (word_t*)(outputb + offset));
         offset += 16;
 
-        bs_add_slice(state, NULL);
-        bs_add_slice(state, NULL);
+        bs_add_slice(state, NULL,1);
+        {
+            // 13 cycles/byte
+            check_fault(state, outputb + offset);
+        }
+
+        bs_add_slice(state, NULL,1);
         bs_apply_sbox(state);
         bs_shiftrows(state);
         bs_mixcolumns(state);
         bs_addroundkey(state,rk);
 
     }
-
-    size -= offset;
 
     while(offset--)
     {
