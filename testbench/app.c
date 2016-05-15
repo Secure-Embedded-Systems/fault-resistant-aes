@@ -10,6 +10,9 @@
 
 #include "app.h"
 #include "../bs.h"
+#include "../aes.h"
+
+void bs_expand_key_dev(word_t * rk, uint8_t * _key);
 
 static void openssl_die()
 {
@@ -51,10 +54,10 @@ int cli_app(int argc, char * argv[])
         exit(1);
     }
 
-    unsigned char * key_s = argv[1];
-    unsigned char * iv_s = argv[2];
-    unsigned char * input_name = argv[3];
-    unsigned char * output_name = argv[4];
+    char * key_s = argv[1];
+    char * iv_s = argv[2];
+    char * input_name = argv[3];
+    char * output_name = argv[4];
 
     FILE * input = fopen(input_name, "r");
     if (input == NULL)
@@ -73,7 +76,7 @@ int cli_app(int argc, char * argv[])
 
     ERR_load_crypto_strings();
 
-    keylen = hex2bin(&key_p,key_s);
+    keylen = hex2bin(&key_p,(uint8_t*)key_s);
     if (keylen > 16)
     {
         free(key_p);
@@ -81,7 +84,7 @@ int cli_app(int argc, char * argv[])
         exit(2);
     }
 
-    ivlen = hex2bin(&iv_p,iv_s);
+    ivlen = hex2bin(&iv_p,(uint8_t*)iv_s);
     if (ivlen > 16)
     {
         free(iv_p);
@@ -123,6 +126,9 @@ int cli_app(int argc, char * argv[])
 
     word_t rk[11][BLOCK_SIZE];
     bs_expand_key(rk, key);
+    
+    word_t rk_dev[BLOCK_SIZE];
+    bs_expand_key_dev(rk_dev, key);
 
 
     struct timespec tstart,tend;
@@ -130,7 +136,7 @@ int cli_app(int argc, char * argv[])
     memset(&tend,0, sizeof(struct timespec));
     clock_gettime(CLOCK_MONOTONIC, &tstart);
     {
-        aes_ctr_encrypt(ct, pt, amt, key, iv, rk);
+        aes_ctr_encrypt_ref(ct, pt, amt, key, iv, rk);
     }
     clock_gettime(CLOCK_MONOTONIC, &tend);
 
@@ -150,7 +156,7 @@ int cli_app(int argc, char * argv[])
     memset(&tend,0, sizeof(struct timespec));
     clock_gettime(CLOCK_MONOTONIC, &tstart);
     {
-        aes_ctr_encrypt_fr(ct2, pt, amt, key, iv,rk);
+        aes_ctr_encrypt(ct2, pt, amt, key, iv,rk_dev);
     }
     clock_gettime(CLOCK_MONOTONIC, &tend);
 

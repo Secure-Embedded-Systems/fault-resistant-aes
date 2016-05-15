@@ -15,8 +15,9 @@
 #endif
 
 void dump_round(word_t * r,int roud);
+void bs_mixcolumns_ref(word_t * B);
 
-void aes_ecb_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key)
+void aes_ecb_encrypt_ref(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key)
 {
     word_t input_space[BLOCK_SIZE];
     word_t rk[11][BLOCK_SIZE];
@@ -48,7 +49,7 @@ void aes_ecb_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t *
     }
 }
 
-void aes_ecb_decrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key)
+void aes_ecb_decrypt_ref(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key)
 {
     word_t input_space[BLOCK_SIZE];
     word_t rk[11][BLOCK_SIZE];
@@ -93,7 +94,7 @@ static void INC_CTR(uint8_t * ctr, uint8_t i)
     }
 }
 
-void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key, uint8_t * iv,
+void aes_ctr_encrypt_ref(uint8_t * outputb, uint8_t * inputb, size_t size, uint8_t * key, uint8_t * iv,
         word_t (* rk)[BLOCK_SIZE])
 {
     word_t ctr[BLOCK_SIZE];
@@ -198,98 +199,84 @@ word_t fr_get_mask()
 /*}*/
 
 
-void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv,
-        word_t (* rk)[BLOCK_SIZE])
+void aes_ctr_encrypt(uint8_t * outputb, uint8_t * inputb, int size, uint8_t * key, uint8_t * iv, word_t * rk)
 {
-    word_t ctr[BLOCK_SIZE];
     word_t iv_copy[WORDS_PER_BLOCK];
     word_t state[BLOCK_SIZE];
-    word_t last[BLOCK_SIZE];
     word_t block_tmp[WORDS_PER_BLOCK];
     
     memset(outputb,0,size);
-    memset(ctr,0,sizeof(ctr));
     memmove(iv_copy,iv,BLOCK_SIZE/8);
     memmove(block_tmp,iv,BLOCK_SIZE/8);
 
     int offset = 0;
 
-        int blocks = size / (BLOCK_SIZE/8);
-        memset(state, 0, sizeof(state));
-        if (size % (BLOCK_SIZE/8))
+    int blocks = size / (BLOCK_SIZE/8);
+    memset(state, 0, sizeof(state));
+    if (size % (BLOCK_SIZE/8))
+    {
+        blocks++;
+    }
+
+    int i,j = 0;
+
+    for (i = 0; i < blocks; i++)
+    {
+
+        if (i > (BS_DATA_ROUNDS-1))
         {
-            blocks++;
-        }
-
-        int i,j = 0;
-
-        for (i = 0; i < blocks; i++)
-        {
-
-            if (i > 8)
-            {
-                bs_get_slice(state, last);
-
-                bs_apply_sbox(last);
-                bs_shiftrows(last);
-                bs_addroundkey(last,rk[1]);
-                bs_transpose_rev(last);
-
-                memmove(outputb + offset, last, 16);
-                offset += 16;
-            }
-
-            for (j=0; j < WORDS_PER_BLOCK; j++)
-            {
-                block_tmp[j] = iv_copy[j] ^ ((word_t*)key)[j];
-            }
-            INC_CTR((uint8_t *)iv_copy,1);
-
-            bs_add_slice(state, block_tmp);
-
-            bs_apply_sbox(state);
-            bs_shiftmix(state);
-
-            bs_addroundkey(state,rk[0]);
-
-        }
-
-        int leftover = MIN(i,9);
-
-        for (; i < 9; i++)
-        {
-            bs_add_slice(state, (word_t *)ones_block);
-
-            bs_apply_sbox(state);
-            bs_shiftmix(state);
-            bs_addroundkey(state,rk[0]);
-        }
-
-        for (j=0; j<leftover; j++)
-        {
-            bs_get_slice(state, last);
-
-            bs_apply_sbox(last);
-            bs_shiftrows(last);
-            bs_addroundkey(last,rk[1]);
-            bs_transpose_rev(last);
-
-            memmove(outputb + offset, last, 16);
+            bs_get_slice(state, (word_t*)(outputb + offset));
             offset += 16;
-
-            bs_add_slice(state, (word_t *)ones_block);
-            bs_apply_sbox(state);
-            bs_shiftmix(state);
-            bs_addroundkey(state,rk[0]);
-
         }
 
-        size -= offset;
-    
-        while(offset--)
+        for (j=0; j < WORDS_PER_BLOCK; j++)
         {
-            outputb[offset] ^= inputb[offset];
+            block_tmp[j] = iv_copy[j] ^ ((word_t*)key)[j];
         }
+        INC_CTR((uint8_t *)iv_copy,1);
+
+        bs_add_slice(state, block_tmp);
+
+        bs_apply_sbox(state);
+        bs_shiftrows(state);
+        bs_mixcolumns(state);
+
+        bs_addroundkey(state,rk);
+
+    }
+
+    int leftover = MIN(i,BS_DATA_ROUNDS);
+
+    for (; i < BS_DATA_ROUNDS; i++)
+    {
+        bs_add_slice(state, (word_t *)ones_block);
+
+        bs_apply_sbox(state);
+        bs_shiftrows(state);
+        bs_mixcolumns(state);
+
+        bs_addroundkey(state,rk);
+    }
+
+    for (j=0; j<leftover; j++)
+    {
+        bs_get_slice(state, (word_t*)(outputb + offset));
+        offset += 16;
+
+        bs_add_slice(state, (word_t *)ones_block);
+        bs_apply_sbox(state);
+        bs_shiftrows(state);
+        bs_mixcolumns(state);
+        bs_addroundkey(state,rk);
+
+    }
+
+    size -= offset;
+
+    while(offset--)
+    {
+        outputb[offset] ^= inputb[offset];
+    }
 
 }
 

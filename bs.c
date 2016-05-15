@@ -31,7 +31,7 @@ void dump_round(word_t * r, int round)
     bs_transpose_rev(space);
 
     printf("round %d\n",round);
-    dump_hex((uint8_t *) space, 16);
+    dump_hex((uint8_t *) space + (round * BLOCK_SIZE/8), 16);
 }
 
 void bs_addroundkey(word_t * B, word_t * rk)
@@ -403,8 +403,9 @@ void bs_get_slice(word_t * src, word_t * block)
     int i;
     for (i = 0; i < BLOCK_SIZE; i++)
     {
-        word_t bit = src[i] & (ONE << 8);
-        block[i] = bit >> 8;
+        word_t bit = (src[i] & (ONE << (BS_DATA_ROUNDS-1))) >> (BS_DATA_ROUNDS -1);
+        /*block[i] = bit >> (BS_DATA_ROUNDS-1);*/
+        block[i/WORD_SIZE] |=  (bit << (i % WORD_SIZE));
     }
 }
 
@@ -420,7 +421,7 @@ void bs_add_slice(word_t * dst, word_t * block)
         dst[i] <<= 1;
 #ifndef UNROLL_TRANSPOSE
         int shift = i % WORD_SIZE;
-        /*dst[i] |= ((block[i / WORD_SIZE] & (ONE << shift)) >> shift);*/
+        dst[i] |= ((block[i / WORD_SIZE] & (ONE << shift)) >> shift);
 #endif
     }
 #ifdef UNROLL_TRANSPOSE
@@ -443,7 +444,7 @@ void bs_add_slice(word_t * dst, word_t * block)
     dst[7 ] |= (w0 & 1);
     w0 >>= 1;
 #if (8%WORD_SIZE == 0)
-    w0 = block[WORD_SIZE/16];
+    w0 = block[WORD_SIZE/8];
 #endif
     dst[8 ] |= (w0 & 1);
     w0 >>= 1;
@@ -1076,6 +1077,145 @@ void bs_shiftrows_rev(word_t * B)
 #define A2  16
 #define A3  24
 
+#define BS_DATA_MASK (0x1ff)
+
+void bs_mixcolumns(word_t * B)
+{
+    word_t Bp_space[BLOCK_SIZE];
+    word_t * Bp = Bp_space;
+
+    int i;
+
+    for ( i = 0; i < BLOCK_SIZE; i++)
+    {
+        Bp_space[i] = B[i] & (~BS_DATA_MASK);
+    }
+
+    // to understand this, see
+    // https://en.wikipedia.org/wiki/Rijndael_mix_columns
+    
+    for (i = 0; i < 4; i++)
+    {
+    //  of = A0 ^ A1;
+    //  A0 = A0 ^ (0x1b & ((signed char)of>>7));
+
+    //// 2 * A0
+    //  A0 = A0 ^ (A0 << 1)
+
+    //// + 3 * A1
+    //  A0 = A0 ^ (A1)
+    //  A0 = A0 ^ (A1<<1)
+
+    //// + A2 + A3
+    //  A0 = A0 ^ (A2)
+    //  A0 = A0 ^ (A3)
+    //          A0.7    A1.7
+    word_t of = B[A0+7] ^ B[A1+7];
+
+    //          2*A0     2*A1          A1      A2           A3
+    Bp[A0+0] ^= (                    B[A1+0] ^ B[A2+0] ^ B[A3+0] ^ of) & BS_DATA_MASK;
+    Bp[A0+1] ^= (B[A0+0] ^ B[A1+0] ^ B[A1+1] ^ B[A2+1] ^ B[A3+1] ^ of) & BS_DATA_MASK;
+    Bp[A0+2] ^= (B[A0+1] ^ B[A1+1] ^ B[A1+2] ^ B[A2+2] ^ B[A3+2]     ) & BS_DATA_MASK;
+    Bp[A0+3] ^= (B[A0+2] ^ B[A1+2] ^ B[A1+3] ^ B[A2+3] ^ B[A3+3] ^ of) & BS_DATA_MASK;
+    Bp[A0+4] ^= (B[A0+3] ^ B[A1+3] ^ B[A1+4] ^ B[A2+4] ^ B[A3+4] ^ of) & BS_DATA_MASK;
+    Bp[A0+5] ^= (B[A0+4] ^ B[A1+4] ^ B[A1+5] ^ B[A2+5] ^ B[A3+5]     ) & BS_DATA_MASK;
+    Bp[A0+6] ^= (B[A0+5] ^ B[A1+5] ^ B[A1+6] ^ B[A2+6] ^ B[A3+6]     ) & BS_DATA_MASK;
+    Bp[A0+7] ^= (B[A0+6] ^ B[A1+6] ^ B[A1+7] ^ B[A2+7] ^ B[A3+7]     ) & BS_DATA_MASK;
+
+
+
+    //  of = A1 ^ A2
+    //  A1 = A1 ^ (0x1b & ((signed char)of>>7));
+
+    //// A0
+    //  A1 = A1 ^ (A0)
+
+    //// + 2 * A1
+    //  A1 = A1 ^ (A1 << 1)
+
+    //// + 3 * A2
+    //  A1 = A1 ^ (A2)
+    //  A1 = A1 ^ (A2<<1)
+
+    //// + A3
+    //  A1 = A1 ^ (A3)
+
+    of = B[A1+7] ^ B[A2+7];
+
+    //          A0      2*A1        2*A2      A2        A3
+    Bp[A1+0] ^= (B[A0+0]                     ^ B[A2+0] ^ B[A3+0] ^ of) & BS_DATA_MASK;
+    Bp[A1+1] ^= (B[A0+1] ^ B[A1+0] ^ B[A2+0] ^ B[A2+1] ^ B[A3+1] ^ of) & BS_DATA_MASK;
+    Bp[A1+2] ^= (B[A0+2] ^ B[A1+1] ^ B[A2+1] ^ B[A2+2] ^ B[A3+2]     ) & BS_DATA_MASK;
+    Bp[A1+3] ^= (B[A0+3] ^ B[A1+2] ^ B[A2+2] ^ B[A2+3] ^ B[A3+3] ^ of) & BS_DATA_MASK;
+    Bp[A1+4] ^= (B[A0+4] ^ B[A1+3] ^ B[A2+3] ^ B[A2+4] ^ B[A3+4] ^ of) & BS_DATA_MASK;
+    Bp[A1+5] ^= (B[A0+5] ^ B[A1+4] ^ B[A2+4] ^ B[A2+5] ^ B[A3+5]     ) & BS_DATA_MASK;
+    Bp[A1+6] ^= (B[A0+6] ^ B[A1+5] ^ B[A2+5] ^ B[A2+6] ^ B[A3+6]     ) & BS_DATA_MASK;
+    Bp[A1+7] ^= (B[A0+7] ^ B[A1+6] ^ B[A2+6] ^ B[A2+7] ^ B[A3+7]     ) & BS_DATA_MASK;
+    
+
+    //  of = A2 ^ A3
+    //  A2 = A2 ^ (0x1b & ((signed char)of>>7));
+
+    //// A0 + A1
+    //  A2 = A2 ^ (A0)
+    //  A2 = A2 ^ (A1)
+
+    //// + 2 * A2
+    //  A2 = A2 ^ (A2 << 1)
+
+    //// + 3 * A3
+    //  A2 = A2 ^ (A3)
+    //  A2 = A2 ^ (A3<<1)
+
+
+    of = B[A2+7] ^ B[A3+7];
+
+    //          A0      A1          2*A2       2*A3         A3
+    Bp[A2+0] ^= (B[A0+0] ^ B[A1+0]                     ^ B[A3+0] ^ of) & BS_DATA_MASK;
+    Bp[A2+1] ^= (B[A0+1] ^ B[A1+1] ^ B[A2+0] ^ B[A3+0] ^ B[A3+1] ^ of) & BS_DATA_MASK;
+    Bp[A2+2] ^= (B[A0+2] ^ B[A1+2] ^ B[A2+1] ^ B[A3+1] ^ B[A3+2]     ) & BS_DATA_MASK;
+    Bp[A2+3] ^= (B[A0+3] ^ B[A1+3] ^ B[A2+2] ^ B[A3+2] ^ B[A3+3] ^ of) & BS_DATA_MASK;
+    Bp[A2+4] ^= (B[A0+4] ^ B[A1+4] ^ B[A2+3] ^ B[A3+3] ^ B[A3+4] ^ of) & BS_DATA_MASK;
+    Bp[A2+5] ^= (B[A0+5] ^ B[A1+5] ^ B[A2+4] ^ B[A3+4] ^ B[A3+5]     ) & BS_DATA_MASK;
+    Bp[A2+6] ^= (B[A0+6] ^ B[A1+6] ^ B[A2+5] ^ B[A3+5] ^ B[A3+6]     ) & BS_DATA_MASK;
+    Bp[A2+7] ^= (B[A0+7] ^ B[A1+7] ^ B[A2+6] ^ B[A3+6] ^ B[A3+7]     ) & BS_DATA_MASK;
+    
+
+    //  A3 = A0 ^ A3
+    //  A3 = A3 ^ (0x1b & ((signed char)of>>7));
+
+    //// 3 * A0
+    //  A3 = A3 ^ (A0)
+    //  A3 = A3 ^ (A0 << 1)
+
+    //// + A1 + A2
+    //  A3 = A3 ^ A1
+    //  A3 = A3 ^ A2
+
+    //// + 2 * A3
+    //  A3 = A3 ^ (A3<<1)
+
+    of = B[A0+7] ^ B[A3+7];
+
+    //        2*A0       A0         A1         A2       2*A3
+    Bp[A3+0] ^= (B[A0+0] ^           B[A1+0] ^ B[A2+0]           ^ of) & BS_DATA_MASK;
+    Bp[A3+1] ^= (B[A0+1] ^ B[A0+0] ^ B[A1+1] ^ B[A2+1] ^ B[A3+0] ^ of) & BS_DATA_MASK;
+    Bp[A3+2] ^= (B[A0+2] ^ B[A0+1] ^ B[A1+2] ^ B[A2+2] ^ B[A3+1]     ) & BS_DATA_MASK;
+    Bp[A3+3] ^= (B[A0+3] ^ B[A0+2] ^ B[A1+3] ^ B[A2+3] ^ B[A3+2] ^ of) & BS_DATA_MASK;
+    Bp[A3+4] ^= (B[A0+4] ^ B[A0+3] ^ B[A1+4] ^ B[A2+4] ^ B[A3+3] ^ of) & BS_DATA_MASK;
+    Bp[A3+5] ^= (B[A0+5] ^ B[A0+4] ^ B[A1+5] ^ B[A2+5] ^ B[A3+4]     ) & BS_DATA_MASK;
+    Bp[A3+6] ^= (B[A0+6] ^ B[A0+5] ^ B[A1+6] ^ B[A2+6] ^ B[A3+5]     ) & BS_DATA_MASK;
+    Bp[A3+7] ^= (B[A0+7] ^ B[A0+6] ^ B[A1+7] ^ B[A2+7] ^ B[A3+6]     ) & BS_DATA_MASK;
+    
+
+    //
+    Bp += BLOCK_SIZE/4;
+    B  += BLOCK_SIZE/4;
+    }
+
+    memmove(B - BLOCK_SIZE,Bp - BLOCK_SIZE,sizeof(Bp_space));
+}
+
 // Does shift rows and mix columns in same step
 void bs_shiftmix(word_t * B)
 {
@@ -1164,7 +1304,7 @@ void bs_shiftmix(word_t * B)
 
 
 
-void bs_mixcolumns(word_t * B)
+void bs_mixcolumns_ref(word_t * B)
 {
     word_t Bp_space[BLOCK_SIZE];
     word_t * Bp = Bp_space;
@@ -1435,12 +1575,12 @@ void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
 }
 
 
-void bs_expand_key_dev(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
+void bs_expand_key_dev(word_t * rk, uint8_t * _key)
 {
     // TODO integrate this better
     uint8_t key[KEY_SCHEDULE_SIZE];
     memmove(key,_key,BLOCK_SIZE/8);
-    memset(rk,0,BLOCK_SIZE * 11);
+    memset(rk,0,BLOCK_SIZE * WORD_SIZE / 8);
 
     expand_key(key);
 
@@ -1455,17 +1595,16 @@ void bs_expand_key_dev(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
     word_t * rk9 = (word_t *) (key + 144);
     word_t * rk10 = (word_t *) (key + 160);
 
-    bs_add_slice(rk[0],rk9);
-    bs_add_slice(rk[0],rk8);
-    bs_add_slice(rk[0],rk7);
-    bs_add_slice(rk[0],rk6);
-    bs_add_slice(rk[0],rk5);
-    bs_add_slice(rk[0],rk4);
-    bs_add_slice(rk[0],rk3);
-    bs_add_slice(rk[0],rk2);
-    bs_add_slice(rk[0],rk1);
-
-    bs_add_slice(rk[1],rk10);
+    bs_add_slice(rk,rk10);
+    bs_add_slice(rk,rk9);
+    bs_add_slice(rk,rk8);
+    bs_add_slice(rk,rk7);
+    bs_add_slice(rk,rk6);
+    bs_add_slice(rk,rk5);
+    bs_add_slice(rk,rk4);
+    bs_add_slice(rk,rk3);
+    bs_add_slice(rk,rk2);
+    bs_add_slice(rk,rk1);
 
 }
 

@@ -14,7 +14,7 @@
 #endif
 
 
-void bs_expand_key_dev(word_t (* rk)[BLOCK_SIZE], uint8_t * _key);
+void bs_expand_key_dev(word_t * rk, uint8_t * _key);
 
 void aes_ecb_test()
 {
@@ -64,15 +64,21 @@ void aes_ctr_test()
         "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
 #ifndef TEST_FOOTPRINT
-#define vector_size (700 * 16)
+#define vector_size (50000000)
 #else
 #define vector_size 32
 #endif
 
-    uint8_t pt_vector[vector_size];
-    uint8_t ct_vector[vector_size];
-    uint8_t output[sizeof(ct_vector)+32];
-    uint8_t input[sizeof(pt_vector)+32];
+    /*uint8_t pt_vector[vector_size];*/
+    /*uint8_t ct_vector[vector_size];*/
+
+    uint8_t * pt_vector = (uint8_t*)malloc(vector_size);
+    uint8_t * ct_vector = (uint8_t*)malloc(vector_size);
+    uint8_t * output = (uint8_t*)malloc(vector_size+32);
+    uint8_t * input = (uint8_t*)malloc(vector_size+32);
+
+    /*uint8_t output[(vector_size)+32];*/
+    /*uint8_t input[(vector_size)+32];*/
 
 #define FILL_RANDOM
 #ifdef FILL_RANDOM
@@ -86,6 +92,8 @@ void aes_ctr_test()
     fclose(r);
     printf("randomized %d bytes of input\n", vector_size);
 
+    /*memset(pt_vector,0,vector_size);*/
+
 
 #endif
 
@@ -93,7 +101,7 @@ void aes_ctr_test()
     bs_expand_key(rk, key_vector);
     
     word_t rk_dev[11][BLOCK_SIZE];
-    bs_expand_key_dev(rk_dev, key_vector);
+    bs_expand_key_dev(rk_dev[0], key_vector);
 
     printf("AES CTR\n");
 
@@ -102,21 +110,21 @@ void aes_ctr_test()
     printf("iv: ");
     dump_hex(iv_vector, 16);
 
-    aes_ctr_encrypt_fr(output, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk_dev);
+    aes_ctr_encrypt(output, pt_vector, (vector_size), key_vector, iv_vector, rk_dev[0]);
     
 #ifndef TEST_FOOTPRINT
-    aes_ctr_encrypt(ct_vector, pt_vector, sizeof(pt_vector), key_vector, iv_vector, rk);
+    aes_ctr_encrypt_ref(ct_vector, pt_vector, (vector_size), key_vector, iv_vector, rk);
 #endif
 
-    aes_ctr_decrypt_fr(input,output,sizeof(pt_vector),key_vector, iv_vector, rk_dev);
+    aes_ctr_decrypt(input,output,(vector_size),key_vector, iv_vector, rk_dev[0]);
 
 #ifndef TEST_FOOTPRINT
-    if (memcmp(pt_vector, input, sizeof(pt_vector)) != 0)
+    if (memcmp(pt_vector, input, vector_size) != 0)
     {
         fprintf(stderr,"error: decrypted ciphertext is not the same as the input plaintext\n");
         exit(1);
     }
-    else if (memcmp(ct_vector, output, sizeof(pt_vector)) != 0)
+    else if (memcmp(ct_vector, output, vector_size) != 0)
     {
         fprintf(stderr,"error: ciphertext is not the same as the test vector\n");
         printf("correct:\n");

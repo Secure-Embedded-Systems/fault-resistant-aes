@@ -4,6 +4,7 @@
 #include "bs.h"
 #include "aes.h"
 #include "utils.h"
+#include "testbench/app.h"
 
 #ifdef RUN_TESTS
 #include "tests/tests.h"
