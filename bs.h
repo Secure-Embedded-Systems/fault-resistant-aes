@@ -55,7 +55,9 @@ void bs_transpose_dst(word_t * transpose, word_t * blocks);
 
 void bs_add_slice(word_t * dst, word_t * block, int indx);
 void bs_get_slice(word_t * src, word_t * block, int indx);
-word_t rotl(word_t val, int shift);
+
+#define rotl(val,shift) (((val) << (shift)) | ((val) >> (WORD_SIZE - (shift))))
+
 void bs_cipher_dev(word_t _state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_t * key);
 
 void bs_sbox(word_t U[8]);

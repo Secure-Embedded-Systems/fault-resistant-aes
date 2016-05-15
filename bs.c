@@ -541,25 +541,21 @@ void bs_get_slice(word_t * src, word_t * block, int BS_DATA_ROUNDS2)
 
 }
 
-word_t rotl(word_t val, int shift)
-{
-    return (val << shift) | (val >> (WORD_SIZE - shift));
-}
-
 // adds a slice to pipelined transpose dst
 // dst is WORD_SIZE blocks size
 // block is 128 bit block 
 void bs_add_slice(word_t * dst, word_t * block, int idx)
 {
-    int i;
 
 #ifndef UNROLL_TRANSPOSE
+    int i;
     if (block != NULL)
     {
+        word_t cmask = ~(1<<idx);
         for (i = 0; i < BLOCK_SIZE; i++)
         {
             dst[i] = rotl(dst[i],1);
-            dst[i] &= ~(1 << idx);
+            dst[i] &= cmask;
             int shift = i % WORD_SIZE;
             dst[i] |= ((block[i / WORD_SIZE] & (ONE << shift)) >> shift) << idx;
         }
@@ -573,142 +569,148 @@ void bs_add_slice(word_t * dst, word_t * block, int idx)
     }
 #endif
 #ifdef UNROLL_TRANSPOSE
+    int i;
+    word_t cmask = ~(1<<idx);
     for (i = 0; i < BLOCK_SIZE; i++)
     {
-        dst[i] <<= amt;
+        dst[i] = rotl(dst[i],1);
+        dst[i] &= cmask;
     }
 
     if (block == NULL)
         return;
 
-    dst[0  ] |= (block[0  /WORD_SIZE] & (ONE << (0   % WORD_SIZE))) >> (0   % WORD_SIZE);
-    dst[1  ] |= (block[1  /WORD_SIZE] & (ONE << (1   % WORD_SIZE))) >> (1   % WORD_SIZE);
-    dst[2  ] |= (block[2  /WORD_SIZE] & (ONE << (2   % WORD_SIZE))) >> (2   % WORD_SIZE);
-    dst[3  ] |= (block[3  /WORD_SIZE] & (ONE << (3   % WORD_SIZE))) >> (3   % WORD_SIZE);
-    dst[4  ] |= (block[4  /WORD_SIZE] & (ONE << (4   % WORD_SIZE))) >> (4   % WORD_SIZE);
-    dst[5  ] |= (block[5  /WORD_SIZE] & (ONE << (5   % WORD_SIZE))) >> (5   % WORD_SIZE);
-    dst[6  ] |= (block[6  /WORD_SIZE] & (ONE << (6   % WORD_SIZE))) >> (6   % WORD_SIZE);
-    dst[7  ] |= (block[7  /WORD_SIZE] & (ONE << (7   % WORD_SIZE))) >> (7   % WORD_SIZE);
-    dst[8  ] |= (block[8  /WORD_SIZE] & (ONE << (8   % WORD_SIZE))) >> (8   % WORD_SIZE);
-    dst[9  ] |= (block[9  /WORD_SIZE] & (ONE << (9   % WORD_SIZE))) >> (9   % WORD_SIZE);
-    dst[10 ] |= (block[10 /WORD_SIZE] & (ONE << (10  % WORD_SIZE))) >> (10  % WORD_SIZE);
-    dst[11 ] |= (block[11 /WORD_SIZE] & (ONE << (11  % WORD_SIZE))) >> (11  % WORD_SIZE);
-    dst[12 ] |= (block[12 /WORD_SIZE] & (ONE << (12  % WORD_SIZE))) >> (12  % WORD_SIZE);
-    dst[13 ] |= (block[13 /WORD_SIZE] & (ONE << (13  % WORD_SIZE))) >> (13  % WORD_SIZE);
-    dst[14 ] |= (block[14 /WORD_SIZE] & (ONE << (14  % WORD_SIZE))) >> (14  % WORD_SIZE);
-    dst[15 ] |= (block[15 /WORD_SIZE] & (ONE << (15  % WORD_SIZE))) >> (15  % WORD_SIZE);
-    dst[16 ] |= (block[16 /WORD_SIZE] & (ONE << (16  % WORD_SIZE))) >> (16  % WORD_SIZE);
-    dst[17 ] |= (block[17 /WORD_SIZE] & (ONE << (17  % WORD_SIZE))) >> (17  % WORD_SIZE);
-    dst[18 ] |= (block[18 /WORD_SIZE] & (ONE << (18  % WORD_SIZE))) >> (18  % WORD_SIZE);
-    dst[19 ] |= (block[19 /WORD_SIZE] & (ONE << (19  % WORD_SIZE))) >> (19  % WORD_SIZE);
-    dst[20 ] |= (block[20 /WORD_SIZE] & (ONE << (20  % WORD_SIZE))) >> (20  % WORD_SIZE);
-    dst[21 ] |= (block[21 /WORD_SIZE] & (ONE << (21  % WORD_SIZE))) >> (21  % WORD_SIZE);
-    dst[22 ] |= (block[22 /WORD_SIZE] & (ONE << (22  % WORD_SIZE))) >> (22  % WORD_SIZE);
-    dst[23 ] |= (block[23 /WORD_SIZE] & (ONE << (23  % WORD_SIZE))) >> (23  % WORD_SIZE);
-    dst[24 ] |= (block[24 /WORD_SIZE] & (ONE << (24  % WORD_SIZE))) >> (24  % WORD_SIZE);
-    dst[25 ] |= (block[25 /WORD_SIZE] & (ONE << (25  % WORD_SIZE))) >> (25  % WORD_SIZE);
-    dst[26 ] |= (block[26 /WORD_SIZE] & (ONE << (26  % WORD_SIZE))) >> (26  % WORD_SIZE);
-    dst[27 ] |= (block[27 /WORD_SIZE] & (ONE << (27  % WORD_SIZE))) >> (27  % WORD_SIZE);
-    dst[28 ] |= (block[28 /WORD_SIZE] & (ONE << (28  % WORD_SIZE))) >> (28  % WORD_SIZE);
-    dst[29 ] |= (block[29 /WORD_SIZE] & (ONE << (29  % WORD_SIZE))) >> (29  % WORD_SIZE);
-    dst[30 ] |= (block[30 /WORD_SIZE] & (ONE << (30  % WORD_SIZE))) >> (30  % WORD_SIZE);
-    dst[31 ] |= (block[31 /WORD_SIZE] & (ONE << (31  % WORD_SIZE))) >> (31  % WORD_SIZE);
-    dst[32 ] |= (block[32 /WORD_SIZE] & (ONE << (32  % WORD_SIZE))) >> (32  % WORD_SIZE);
-    dst[33 ] |= (block[33 /WORD_SIZE] & (ONE << (33  % WORD_SIZE))) >> (33  % WORD_SIZE);
-    dst[34 ] |= (block[34 /WORD_SIZE] & (ONE << (34  % WORD_SIZE))) >> (34  % WORD_SIZE);
-    dst[35 ] |= (block[35 /WORD_SIZE] & (ONE << (35  % WORD_SIZE))) >> (35  % WORD_SIZE);
-    dst[36 ] |= (block[36 /WORD_SIZE] & (ONE << (36  % WORD_SIZE))) >> (36  % WORD_SIZE);
-    dst[37 ] |= (block[37 /WORD_SIZE] & (ONE << (37  % WORD_SIZE))) >> (37  % WORD_SIZE);
-    dst[38 ] |= (block[38 /WORD_SIZE] & (ONE << (38  % WORD_SIZE))) >> (38  % WORD_SIZE);
-    dst[39 ] |= (block[39 /WORD_SIZE] & (ONE << (39  % WORD_SIZE))) >> (39  % WORD_SIZE);
-    dst[40 ] |= (block[40 /WORD_SIZE] & (ONE << (40  % WORD_SIZE))) >> (40  % WORD_SIZE);
-    dst[41 ] |= (block[41 /WORD_SIZE] & (ONE << (41  % WORD_SIZE))) >> (41  % WORD_SIZE);
-    dst[42 ] |= (block[42 /WORD_SIZE] & (ONE << (42  % WORD_SIZE))) >> (42  % WORD_SIZE);
-    dst[43 ] |= (block[43 /WORD_SIZE] & (ONE << (43  % WORD_SIZE))) >> (43  % WORD_SIZE);
-    dst[44 ] |= (block[44 /WORD_SIZE] & (ONE << (44  % WORD_SIZE))) >> (44  % WORD_SIZE);
-    dst[45 ] |= (block[45 /WORD_SIZE] & (ONE << (45  % WORD_SIZE))) >> (45  % WORD_SIZE);
-    dst[46 ] |= (block[46 /WORD_SIZE] & (ONE << (46  % WORD_SIZE))) >> (46  % WORD_SIZE);
-    dst[47 ] |= (block[47 /WORD_SIZE] & (ONE << (47  % WORD_SIZE))) >> (47  % WORD_SIZE);
-    dst[48 ] |= (block[48 /WORD_SIZE] & (ONE << (48  % WORD_SIZE))) >> (48  % WORD_SIZE);
-    dst[49 ] |= (block[49 /WORD_SIZE] & (ONE << (49  % WORD_SIZE))) >> (49  % WORD_SIZE);
-    dst[50 ] |= (block[50 /WORD_SIZE] & (ONE << (50  % WORD_SIZE))) >> (50  % WORD_SIZE);
-    dst[51 ] |= (block[51 /WORD_SIZE] & (ONE << (51  % WORD_SIZE))) >> (51  % WORD_SIZE);
-    dst[52 ] |= (block[52 /WORD_SIZE] & (ONE << (52  % WORD_SIZE))) >> (52  % WORD_SIZE);
-    dst[53 ] |= (block[53 /WORD_SIZE] & (ONE << (53  % WORD_SIZE))) >> (53  % WORD_SIZE);
-    dst[54 ] |= (block[54 /WORD_SIZE] & (ONE << (54  % WORD_SIZE))) >> (54  % WORD_SIZE);
-    dst[55 ] |= (block[55 /WORD_SIZE] & (ONE << (55  % WORD_SIZE))) >> (55  % WORD_SIZE);
-    dst[56 ] |= (block[56 /WORD_SIZE] & (ONE << (56  % WORD_SIZE))) >> (56  % WORD_SIZE);
-    dst[57 ] |= (block[57 /WORD_SIZE] & (ONE << (57  % WORD_SIZE))) >> (57  % WORD_SIZE);
-    dst[58 ] |= (block[58 /WORD_SIZE] & (ONE << (58  % WORD_SIZE))) >> (58  % WORD_SIZE);
-    dst[59 ] |= (block[59 /WORD_SIZE] & (ONE << (59  % WORD_SIZE))) >> (59  % WORD_SIZE);
-    dst[60 ] |= (block[60 /WORD_SIZE] & (ONE << (60  % WORD_SIZE))) >> (60  % WORD_SIZE);
-    dst[61 ] |= (block[61 /WORD_SIZE] & (ONE << (61  % WORD_SIZE))) >> (61  % WORD_SIZE);
-    dst[62 ] |= (block[62 /WORD_SIZE] & (ONE << (62  % WORD_SIZE))) >> (62  % WORD_SIZE);
-    dst[63 ] |= (block[63 /WORD_SIZE] & (ONE << (63  % WORD_SIZE))) >> (63  % WORD_SIZE);
-    dst[64 ] |= (block[64 /WORD_SIZE] & (ONE << (64  % WORD_SIZE))) >> (64  % WORD_SIZE);
-    dst[65 ] |= (block[65 /WORD_SIZE] & (ONE << (65  % WORD_SIZE))) >> (65  % WORD_SIZE);
-    dst[66 ] |= (block[66 /WORD_SIZE] & (ONE << (66  % WORD_SIZE))) >> (66  % WORD_SIZE);
-    dst[67 ] |= (block[67 /WORD_SIZE] & (ONE << (67  % WORD_SIZE))) >> (67  % WORD_SIZE);
-    dst[68 ] |= (block[68 /WORD_SIZE] & (ONE << (68  % WORD_SIZE))) >> (68  % WORD_SIZE);
-    dst[69 ] |= (block[69 /WORD_SIZE] & (ONE << (69  % WORD_SIZE))) >> (69  % WORD_SIZE);
-    dst[70 ] |= (block[70 /WORD_SIZE] & (ONE << (70  % WORD_SIZE))) >> (70  % WORD_SIZE);
-    dst[71 ] |= (block[71 /WORD_SIZE] & (ONE << (71  % WORD_SIZE))) >> (71  % WORD_SIZE);
-    dst[72 ] |= (block[72 /WORD_SIZE] & (ONE << (72  % WORD_SIZE))) >> (72  % WORD_SIZE);
-    dst[73 ] |= (block[73 /WORD_SIZE] & (ONE << (73  % WORD_SIZE))) >> (73  % WORD_SIZE);
-    dst[74 ] |= (block[74 /WORD_SIZE] & (ONE << (74  % WORD_SIZE))) >> (74  % WORD_SIZE);
-    dst[75 ] |= (block[75 /WORD_SIZE] & (ONE << (75  % WORD_SIZE))) >> (75  % WORD_SIZE);
-    dst[76 ] |= (block[76 /WORD_SIZE] & (ONE << (76  % WORD_SIZE))) >> (76  % WORD_SIZE);
-    dst[77 ] |= (block[77 /WORD_SIZE] & (ONE << (77  % WORD_SIZE))) >> (77  % WORD_SIZE);
-    dst[78 ] |= (block[78 /WORD_SIZE] & (ONE << (78  % WORD_SIZE))) >> (78  % WORD_SIZE);
-    dst[79 ] |= (block[79 /WORD_SIZE] & (ONE << (79  % WORD_SIZE))) >> (79  % WORD_SIZE);
-    dst[80 ] |= (block[80 /WORD_SIZE] & (ONE << (80  % WORD_SIZE))) >> (80  % WORD_SIZE);
-    dst[81 ] |= (block[81 /WORD_SIZE] & (ONE << (81  % WORD_SIZE))) >> (81  % WORD_SIZE);
-    dst[82 ] |= (block[82 /WORD_SIZE] & (ONE << (82  % WORD_SIZE))) >> (82  % WORD_SIZE);
-    dst[83 ] |= (block[83 /WORD_SIZE] & (ONE << (83  % WORD_SIZE))) >> (83  % WORD_SIZE);
-    dst[84 ] |= (block[84 /WORD_SIZE] & (ONE << (84  % WORD_SIZE))) >> (84  % WORD_SIZE);
-    dst[85 ] |= (block[85 /WORD_SIZE] & (ONE << (85  % WORD_SIZE))) >> (85  % WORD_SIZE);
-    dst[86 ] |= (block[86 /WORD_SIZE] & (ONE << (86  % WORD_SIZE))) >> (86  % WORD_SIZE);
-    dst[87 ] |= (block[87 /WORD_SIZE] & (ONE << (87  % WORD_SIZE))) >> (87  % WORD_SIZE);
-    dst[88 ] |= (block[88 /WORD_SIZE] & (ONE << (88  % WORD_SIZE))) >> (88  % WORD_SIZE);
-    dst[89 ] |= (block[89 /WORD_SIZE] & (ONE << (89  % WORD_SIZE))) >> (89  % WORD_SIZE);
-    dst[90 ] |= (block[90 /WORD_SIZE] & (ONE << (90  % WORD_SIZE))) >> (90  % WORD_SIZE);
-    dst[91 ] |= (block[91 /WORD_SIZE] & (ONE << (91  % WORD_SIZE))) >> (91  % WORD_SIZE);
-    dst[92 ] |= (block[92 /WORD_SIZE] & (ONE << (92  % WORD_SIZE))) >> (92  % WORD_SIZE);
-    dst[93 ] |= (block[93 /WORD_SIZE] & (ONE << (93  % WORD_SIZE))) >> (93  % WORD_SIZE);
-    dst[94 ] |= (block[94 /WORD_SIZE] & (ONE << (94  % WORD_SIZE))) >> (94  % WORD_SIZE);
-    dst[95 ] |= (block[95 /WORD_SIZE] & (ONE << (95  % WORD_SIZE))) >> (95  % WORD_SIZE);
-    dst[96 ] |= (block[96 /WORD_SIZE] & (ONE << (96  % WORD_SIZE))) >> (96  % WORD_SIZE);
-    dst[97 ] |= (block[97 /WORD_SIZE] & (ONE << (97  % WORD_SIZE))) >> (97  % WORD_SIZE);
-    dst[98 ] |= (block[98 /WORD_SIZE] & (ONE << (98  % WORD_SIZE))) >> (98  % WORD_SIZE);
-    dst[99 ] |= (block[99 /WORD_SIZE] & (ONE << (99  % WORD_SIZE))) >> (99  % WORD_SIZE);
-    dst[100] |= (block[100/WORD_SIZE] & (ONE << (100 % WORD_SIZE))) >> (100 % WORD_SIZE);
-    dst[101] |= (block[101/WORD_SIZE] & (ONE << (101 % WORD_SIZE))) >> (101 % WORD_SIZE);
-    dst[102] |= (block[102/WORD_SIZE] & (ONE << (102 % WORD_SIZE))) >> (102 % WORD_SIZE);
-    dst[103] |= (block[103/WORD_SIZE] & (ONE << (103 % WORD_SIZE))) >> (103 % WORD_SIZE);
-    dst[104] |= (block[104/WORD_SIZE] & (ONE << (104 % WORD_SIZE))) >> (104 % WORD_SIZE);
-    dst[105] |= (block[105/WORD_SIZE] & (ONE << (105 % WORD_SIZE))) >> (105 % WORD_SIZE);
-    dst[106] |= (block[106/WORD_SIZE] & (ONE << (106 % WORD_SIZE))) >> (106 % WORD_SIZE);
-    dst[107] |= (block[107/WORD_SIZE] & (ONE << (107 % WORD_SIZE))) >> (107 % WORD_SIZE);
-    dst[108] |= (block[108/WORD_SIZE] & (ONE << (108 % WORD_SIZE))) >> (108 % WORD_SIZE);
-    dst[109] |= (block[109/WORD_SIZE] & (ONE << (109 % WORD_SIZE))) >> (109 % WORD_SIZE);
-    dst[110] |= (block[110/WORD_SIZE] & (ONE << (110 % WORD_SIZE))) >> (110 % WORD_SIZE);
-    dst[111] |= (block[111/WORD_SIZE] & (ONE << (111 % WORD_SIZE))) >> (111 % WORD_SIZE);
-    dst[112] |= (block[112/WORD_SIZE] & (ONE << (112 % WORD_SIZE))) >> (112 % WORD_SIZE);
-    dst[113] |= (block[113/WORD_SIZE] & (ONE << (113 % WORD_SIZE))) >> (113 % WORD_SIZE);
-    dst[114] |= (block[114/WORD_SIZE] & (ONE << (114 % WORD_SIZE))) >> (114 % WORD_SIZE);
-    dst[115] |= (block[115/WORD_SIZE] & (ONE << (115 % WORD_SIZE))) >> (115 % WORD_SIZE);
-    dst[116] |= (block[116/WORD_SIZE] & (ONE << (116 % WORD_SIZE))) >> (116 % WORD_SIZE);
-    dst[117] |= (block[117/WORD_SIZE] & (ONE << (117 % WORD_SIZE))) >> (117 % WORD_SIZE);
-    dst[118] |= (block[118/WORD_SIZE] & (ONE << (118 % WORD_SIZE))) >> (118 % WORD_SIZE);
-    dst[119] |= (block[119/WORD_SIZE] & (ONE << (119 % WORD_SIZE))) >> (119 % WORD_SIZE);
-    dst[120] |= (block[120/WORD_SIZE] & (ONE << (120 % WORD_SIZE))) >> (120 % WORD_SIZE);
-    dst[121] |= (block[121/WORD_SIZE] & (ONE << (121 % WORD_SIZE))) >> (121 % WORD_SIZE);
-    dst[122] |= (block[122/WORD_SIZE] & (ONE << (122 % WORD_SIZE))) >> (122 % WORD_SIZE);
-    dst[123] |= (block[123/WORD_SIZE] & (ONE << (123 % WORD_SIZE))) >> (123 % WORD_SIZE);
-    dst[124] |= (block[124/WORD_SIZE] & (ONE << (124 % WORD_SIZE))) >> (124 % WORD_SIZE);
-    dst[125] |= (block[125/WORD_SIZE] & (ONE << (125 % WORD_SIZE))) >> (125 % WORD_SIZE);
-    dst[126] |= (block[126/WORD_SIZE] & (ONE << (126 % WORD_SIZE))) >> (126 % WORD_SIZE);
-    dst[127] |= (block[127/WORD_SIZE] & (ONE << (127 % WORD_SIZE))) >> (127 % WORD_SIZE);
+#define UNROLLED_ADD_SLICE(j)\
+    dst[j] |= ((block[j / WORD_SIZE] & (ONE << (j % WORD_SIZE))) >> (j % WORD_SIZE)) << idx;
+
+    UNROLLED_ADD_SLICE(0  );
+    UNROLLED_ADD_SLICE(1  );
+    UNROLLED_ADD_SLICE(2  );
+    UNROLLED_ADD_SLICE(3  );
+    UNROLLED_ADD_SLICE(4  );
+    UNROLLED_ADD_SLICE(5  );
+    UNROLLED_ADD_SLICE(6  );
+    UNROLLED_ADD_SLICE(7  );
+    UNROLLED_ADD_SLICE(8  );
+    UNROLLED_ADD_SLICE(9  );
+    UNROLLED_ADD_SLICE(10 );
+    UNROLLED_ADD_SLICE(11 );
+    UNROLLED_ADD_SLICE(12 );
+    UNROLLED_ADD_SLICE(13 );
+    UNROLLED_ADD_SLICE(14 );
+    UNROLLED_ADD_SLICE(15 );
+    UNROLLED_ADD_SLICE(16 );
+    UNROLLED_ADD_SLICE(17 );
+    UNROLLED_ADD_SLICE(18 );
+    UNROLLED_ADD_SLICE(19 );
+    UNROLLED_ADD_SLICE(20 );
+    UNROLLED_ADD_SLICE(21 );
+    UNROLLED_ADD_SLICE(22 );
+    UNROLLED_ADD_SLICE(23 );
+    UNROLLED_ADD_SLICE(24 );
+    UNROLLED_ADD_SLICE(25 );
+    UNROLLED_ADD_SLICE(26 );
+    UNROLLED_ADD_SLICE(27 );
+    UNROLLED_ADD_SLICE(28 );
+    UNROLLED_ADD_SLICE(29 );
+    UNROLLED_ADD_SLICE(30 );
+    UNROLLED_ADD_SLICE(31 );
+    UNROLLED_ADD_SLICE(32 );
+    UNROLLED_ADD_SLICE(33 );
+    UNROLLED_ADD_SLICE(34 );
+    UNROLLED_ADD_SLICE(35 );
+    UNROLLED_ADD_SLICE(36 );
+    UNROLLED_ADD_SLICE(37 );
+    UNROLLED_ADD_SLICE(38 );
+    UNROLLED_ADD_SLICE(39 );
+    UNROLLED_ADD_SLICE(40 );
+    UNROLLED_ADD_SLICE(41 );
+    UNROLLED_ADD_SLICE(42 );
+    UNROLLED_ADD_SLICE(43 );
+    UNROLLED_ADD_SLICE(44 );
+    UNROLLED_ADD_SLICE(45 );
+    UNROLLED_ADD_SLICE(46 );
+    UNROLLED_ADD_SLICE(47 );
+    UNROLLED_ADD_SLICE(48 );
+    UNROLLED_ADD_SLICE(49 );
+    UNROLLED_ADD_SLICE(50 );
+    UNROLLED_ADD_SLICE(51 );
+    UNROLLED_ADD_SLICE(52 );
+    UNROLLED_ADD_SLICE(53 );
+    UNROLLED_ADD_SLICE(54 );
+    UNROLLED_ADD_SLICE(55 );
+    UNROLLED_ADD_SLICE(56 );
+    UNROLLED_ADD_SLICE(57 );
+    UNROLLED_ADD_SLICE(58 );
+    UNROLLED_ADD_SLICE(59 );
+    UNROLLED_ADD_SLICE(60 );
+    UNROLLED_ADD_SLICE(61 );
+    UNROLLED_ADD_SLICE(62 );
+    UNROLLED_ADD_SLICE(63 );
+    UNROLLED_ADD_SLICE(64 );
+    UNROLLED_ADD_SLICE(65 );
+    UNROLLED_ADD_SLICE(66 );
+    UNROLLED_ADD_SLICE(67 );
+    UNROLLED_ADD_SLICE(68 );
+    UNROLLED_ADD_SLICE(69 );
+    UNROLLED_ADD_SLICE(70 );
+    UNROLLED_ADD_SLICE(71 );
+    UNROLLED_ADD_SLICE(72 );
+    UNROLLED_ADD_SLICE(73 );
+    UNROLLED_ADD_SLICE(74 );
+    UNROLLED_ADD_SLICE(75 );
+    UNROLLED_ADD_SLICE(76 );
+    UNROLLED_ADD_SLICE(77 );
+    UNROLLED_ADD_SLICE(78 );
+    UNROLLED_ADD_SLICE(79 );
+    UNROLLED_ADD_SLICE(80 );
+    UNROLLED_ADD_SLICE(81 );
+    UNROLLED_ADD_SLICE(82 );
+    UNROLLED_ADD_SLICE(83 );
+    UNROLLED_ADD_SLICE(84 );
+    UNROLLED_ADD_SLICE(85 );
+    UNROLLED_ADD_SLICE(86 );
+    UNROLLED_ADD_SLICE(87 );
+    UNROLLED_ADD_SLICE(88 );
+    UNROLLED_ADD_SLICE(89 );
+    UNROLLED_ADD_SLICE(90 );
+    UNROLLED_ADD_SLICE(91 );
+    UNROLLED_ADD_SLICE(92 );
+    UNROLLED_ADD_SLICE(93 );
+    UNROLLED_ADD_SLICE(94 );
+    UNROLLED_ADD_SLICE(95 );
+    UNROLLED_ADD_SLICE(96 );
+    UNROLLED_ADD_SLICE(97 );
+    UNROLLED_ADD_SLICE(98 );
+    UNROLLED_ADD_SLICE(99 );
+    UNROLLED_ADD_SLICE(100);
+    UNROLLED_ADD_SLICE(101);
+    UNROLLED_ADD_SLICE(102);
+    UNROLLED_ADD_SLICE(103);
+    UNROLLED_ADD_SLICE(104);
+    UNROLLED_ADD_SLICE(105);
+    UNROLLED_ADD_SLICE(106);
+    UNROLLED_ADD_SLICE(107);
+    UNROLLED_ADD_SLICE(108);
+    UNROLLED_ADD_SLICE(109);
+    UNROLLED_ADD_SLICE(110);
+    UNROLLED_ADD_SLICE(111);
+    UNROLLED_ADD_SLICE(112);
+    UNROLLED_ADD_SLICE(113);
+    UNROLLED_ADD_SLICE(114);
+    UNROLLED_ADD_SLICE(115);
+    UNROLLED_ADD_SLICE(116);
+    UNROLLED_ADD_SLICE(117);
+    UNROLLED_ADD_SLICE(118);
+    UNROLLED_ADD_SLICE(119);
+    UNROLLED_ADD_SLICE(120);
+    UNROLLED_ADD_SLICE(121);
+    UNROLLED_ADD_SLICE(122);
+    UNROLLED_ADD_SLICE(123);
+    UNROLLED_ADD_SLICE(124);
+    UNROLLED_ADD_SLICE(125);
+    UNROLLED_ADD_SLICE(126);
+    UNROLLED_ADD_SLICE(127);
 
 #endif
 }

@@ -2,7 +2,12 @@ src = $(wildcard *.c)
 obj = $(src:.c=.o)
 
 LDFLAGS = -Wl,--gc-sections
-CFLAGS = -O3 -fdata-sections -ffunction-sections -Wall
+
+# performance
+#CFLAGS = -O3 -fdata-sections -ffunction-sections -DUNROLL_TRANSPOSE -Wall
+
+# footprint
+CFLAGS = -O2 -fdata-sections -ffunction-sections -Wall
 
 #CC=sparc-elf-gcc
 CC=gcc

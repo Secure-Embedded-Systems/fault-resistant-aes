@@ -47,12 +47,21 @@ Performance measurements were done on 64 bit intel 4790 but used a 32 bit word l
 |Performance optimized |  19,189 bytes  |  57.9%    | 223 cycles/byte |   218.5%   |
 |Footprint optimized   |  8,157 bytes   |   -4.3% <sup id="a1">[1](#f1)</sup>  | 373 cycles/byte |   432.9%   |
 
+
+
+## For (3) countermeasure
+
+Performance measurements were done on 64 bit intel 4790 but used a 32 bit word length.
+
+|                      |footprint       | overhead | throughput     | overhead |
+|----------------------|----------------|----------|----------------|----------|
+|Performance optimized |  19,678 bytes  |  61.9%    | 304 cycles/byte |   340.6%   |
+|Footprint optimized   |  8,218 bytes   |   -3.6%  <sup id="a1">[1](#f1)</sup> | 422 cycles/byte |   511.6%   |
+
+
+
+
 <b id="f1">1</b> Footprint is actually smaller because the transpose is simplified [↩](#a1)
-
-
-Performance could be improved by about 5-10x by writing in assembly and ensuring
-more operations stay in registers rather then spill to memory.
-
 
 Compiling
 ----------
