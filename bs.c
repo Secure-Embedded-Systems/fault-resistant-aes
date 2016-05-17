@@ -493,7 +493,7 @@ void bs_transpose_rev(word_t * blocks)
         int j;
         for(j=0; j < WORD_SIZE; j++)
         {
-            word_t bit = (w & (ONE << j)) ? (ONE << (k % WORD_SIZE)) : 0;
+            word_t bit = (w & (ONE << j)) ? bitpos : 0;
             transpose[j * WORDS_PER_BLOCK + (offset)] |= bit;
         }
 #else
