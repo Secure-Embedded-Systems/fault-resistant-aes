@@ -5,163 +5,60 @@
 #include <unistd.h>
 #include <time.h>
 
-#include <openssl/bn.h>
-#include <openssl/err.h>
+#include <asm-leon/timer.h>
 
 #include "app.h"
 #include "../bs.h"
 
-static void openssl_die()
-{
-    fprintf(stderr,"error: %s\n",
-            ERR_error_string(ERR_get_error(),NULL) );
-    exit(2);
-}
-
-static unsigned int hex2bin(unsigned char ** bin, const unsigned char * hex)
-{
-    int len;
-    BIGNUM * bn = NULL;
-    if(BN_hex2bn(&bn, (char*)hex) == 0)
-    {   openssl_die();    }
-
-    len = BN_num_bytes(bn);
-    *bin = (unsigned char *)malloc(len);
-
-    if(BN_bn2bin(bn, *bin) == 0)
-    {   openssl_die();  }
-    return len;
-}
-
 
 int cli_app(int argc, char * argv[])
 {
-    uint8_t key[16];
-    uint8_t iv[16];
-    
-    uint8_t * key_p = NULL, * iv_p = NULL;
+    uint8_t key[16] = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
+    uint8_t iv[16]  = "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
-    int keylen, ivlen;
+    uint8_t pt[16*10000];
+    uint8_t ct[16*10000];
+    uint8_t ct2[16*10000];
 
-    if (argc != 5)
-    {
-        fprintf(stderr, 
-                "Bitsliced AES-CTR\n"
-                "usage: %s <key-hex> <iv-hex> <input-file> <output-file>\n", argv[0]);
-        exit(1);
-    }
+    int amt = sizeof(pt);
 
-    unsigned char * key_s = argv[1];
-    unsigned char * iv_s = argv[2];
-    unsigned char * input_name = argv[3];
-    unsigned char * output_name = argv[4];
-
-    FILE * input = fopen(input_name, "r");
-    if (input == NULL)
-    {
-        perror("fopen");
-        exit(2);
-    }
-
-    FILE * output = fopen(output_name, "w+");
-    if (output == NULL)
-    {
-        perror("fopen");
-        exit(2);
-    }
-
-
-    ERR_load_crypto_strings();
-
-    keylen = hex2bin(&key_p,key_s);
-    if (keylen > 16)
-    {
-        free(key_p);
-        fprintf(stderr,"key must be 16 bytes or less\n");
-        exit(2);
-    }
-
-    ivlen = hex2bin(&iv_p,iv_s);
-    if (ivlen > 16)
-    {
-        free(iv_p);
-        free(key_p);
-        fprintf(stderr,"iv must be 16 bytes or less\n");
-        exit(2);
-    }
-
-    memset(iv,0,16);
-    memset(key,0,16);
-
-    memmove(iv, iv_p, ivlen);
-    memmove(key, key_p, keylen);
-
-    free(iv_p);
-    free(key_p);
-
-    fseek(input, 0L, SEEK_END);
-    size_t amt = ftell(input);
-    fseek(input, 0L, SEEK_SET);
-
-    uint8_t * pt = (uint8_t *) malloc(amt);
-    uint8_t * ct = (uint8_t *) malloc(amt);
-    uint8_t * ct2 = (uint8_t *) malloc(amt+32);
-
-    memset(pt,0,amt);
-    memset(ct,0,amt);
-    memset(ct2,0,amt+32);
-
-    int ptlen = fread(pt, 1, amt, input);
-    if (ptlen != amt)
-    {
-        perror("fread");
-        free(pt);
-        free(ct);
-        free(ct2);
-        exit(2);
-    }
+    printf("%d bytes\n",amt);
 
     word_t rk[11][BLOCK_SIZE];
     bs_expand_key(rk, key);
+    leonbare_init_ticks();
 
-
-    struct timespec tstart,tend;
-    memset(&tstart,0, sizeof(struct timespec));
-    memset(&tend,0, sizeof(struct timespec));
-    clock_gettime(CLOCK_MONOTONIC, &tstart);
+    uint32_t tstart,tend;
+    tstart = clock();
     {
         aes_ctr_encrypt(ct, pt, amt, key, iv, rk);
     }
-    clock_gettime(CLOCK_MONOTONIC, &tend);
+    tend = clock();
 
-    double total = (((double)tend.tv_sec + 1.0e-9 * (double)tend.tv_nsec) -
-                ((double)tstart.tv_sec + 1.0e-9 * (double)tstart.tv_nsec));
+    double total = ((1.0e-6 * (double)tend) -
+                (1.0e-6 * (double)tstart));
 
     printf("unprotected performance for %d word length\n", WORD_SIZE);
     printf("-------------------------------\n");
     printf("%.5f s\n", total);
     printf("%.15f s/byte\n", total/amt);
-    printf("%.5f cycles/byte (for 4 GHz)\n", 4000ull * (1ull<<20) * total/amt);
+    printf("%.5f cycles/byte (for 50 MHz)\n", 50ull * (1ull<<20) * total/amt);
 
     
-    memset(ct2,0,amt+32);
-
-    memset(&tstart,0, sizeof(struct timespec));
-    memset(&tend,0, sizeof(struct timespec));
-    clock_gettime(CLOCK_MONOTONIC, &tstart);
+    tstart = clock();
     {
         aes_ctr_encrypt_fr(ct2, pt, amt, key, iv,rk);
     }
-    clock_gettime(CLOCK_MONOTONIC, &tend);
+    tend = clock();
 
-    total = (((double)tend.tv_sec + 1.0e-9 * (double)tend.tv_nsec) -
-                ((double)tstart.tv_sec + 1.0e-9 * (double)tstart.tv_nsec));
+    total = ((1.0e-6 * (double)tend) -
+            (1.0e-6 * (double)tstart));
 
     printf("protected performance for %d word length\n", WORD_SIZE);
     printf("-------------------------------\n");
     printf("%.5f s\n", total);
     printf("%.15f s/byte\n", total/amt);
-    printf("%.5f cycles/byte (for 4 GHz)\n", 4000ull * (1ull<<20) * total/amt);
+    printf("%.5f cycles/byte (for 50 MHz)\n", 50ull * (1ull<<20) * total/amt);
 
     if (memcmp(ct, ct2, amt) != 0)
     {
@@ -171,15 +68,6 @@ int cli_app(int argc, char * argv[])
         /*dump_hex(ct2,amt);*/
     }
 
-
-    if (write(fileno(output), ct, amt) == -1)
-    {
-        perror("write");
-    }
-
-    free(ct2);
-    free(ct);
-    free(pt);
 
     return 0;
 }
