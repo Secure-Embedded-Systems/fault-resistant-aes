@@ -397,8 +397,8 @@ void bs_transpose(word_t * blocks)
 // returns the slice from end of pipeline
 // dst is WORD_SIZE blocks size
 // block is 128 bit block 
-#define BS_DATA_ROUNDS2 ((BS_DATA_ROUNDS)*3-1)
-void bs_get_slice(word_t * src, word_t * block)
+/*#define BS_DATA_ROUNDS2 ((BS_DATA_ROUNDS)*3-1)*/
+void bs_get_slice(word_t * src, word_t * block, int BS_DATA_ROUNDS2)
 {
 #ifndef UNROLL_TRANSPOSE
     int i;
@@ -544,7 +544,7 @@ void bs_get_slice(word_t * src, word_t * block)
 // adds a slice to pipelined transpose dst
 // dst is WORD_SIZE blocks size
 // block is 128 bit block 
-void bs_add_slice(word_t * dst, word_t * block, int amt)
+void bs_add_slice(word_t * dst, word_t * block)
 {
     int i;
 
@@ -562,14 +562,14 @@ void bs_add_slice(word_t * dst, word_t * block, int amt)
     {
         for (i = 0; i < BLOCK_SIZE; i++)
         {
-            dst[i] <<= amt;
+            dst[i] <<= 1;
         }
     }
 #endif
 #ifdef UNROLL_TRANSPOSE
     for (i = 0; i < BLOCK_SIZE; i++)
     {
-        dst[i] <<= amt;
+        dst[i] <<= 1;
     }
 
     if (block == NULL)
@@ -1572,36 +1572,36 @@ void bs_expand_key_dev(word_t * rk, uint8_t * _key)
     word_t * rk10 = (word_t *) (key + 160);
 
 
-    bs_add_slice(rk,rk10,1);
-    bs_add_slice(rk,rk10,1);
-    bs_add_slice(rk,rk10,1);
-    bs_add_slice(rk,rk9,1);
-    bs_add_slice(rk,rk9,1);
-    bs_add_slice(rk,rk9,1);
-    bs_add_slice(rk,rk8,1);
-    bs_add_slice(rk,rk8,1);
-    bs_add_slice(rk,rk8,1);
-    bs_add_slice(rk,rk7,1);
-    bs_add_slice(rk,rk7,1);
-    bs_add_slice(rk,rk7,1);
-    bs_add_slice(rk,rk6,1);
-    bs_add_slice(rk,rk6,1);
-    bs_add_slice(rk,rk6,1);
-    bs_add_slice(rk,rk5,1);
-    bs_add_slice(rk,rk5,1);
-    bs_add_slice(rk,rk5,1);
-    bs_add_slice(rk,rk4,1);
-    bs_add_slice(rk,rk4,1);
-    bs_add_slice(rk,rk4,1);
-    bs_add_slice(rk,rk3,1);
-    bs_add_slice(rk,rk3,1);
-    bs_add_slice(rk,rk3,1);
-    bs_add_slice(rk,rk2,1);
-    bs_add_slice(rk,rk2,1);
-    bs_add_slice(rk,rk2,1);
-    bs_add_slice(rk,rk1,1);
-    bs_add_slice(rk,rk1,1);
-    bs_add_slice(rk,rk1,1);
+    bs_add_slice(rk,rk10);
+    bs_add_slice(rk,rk10);
+    bs_add_slice(rk,rk10);
+    bs_add_slice(rk,rk9);
+    bs_add_slice(rk,rk9);
+    bs_add_slice(rk,rk9);
+    bs_add_slice(rk,rk8);
+    bs_add_slice(rk,rk8);
+    bs_add_slice(rk,rk8);
+    bs_add_slice(rk,rk7);
+    bs_add_slice(rk,rk7);
+    bs_add_slice(rk,rk7);
+    bs_add_slice(rk,rk6);
+    bs_add_slice(rk,rk6);
+    bs_add_slice(rk,rk6);
+    bs_add_slice(rk,rk5);
+    bs_add_slice(rk,rk5);
+    bs_add_slice(rk,rk5);
+    bs_add_slice(rk,rk4);
+    bs_add_slice(rk,rk4);
+    bs_add_slice(rk,rk4);
+    bs_add_slice(rk,rk3);
+    bs_add_slice(rk,rk3);
+    bs_add_slice(rk,rk3);
+    bs_add_slice(rk,rk2);
+    bs_add_slice(rk,rk2);
+    bs_add_slice(rk,rk2);
+    bs_add_slice(rk,rk1);
+    bs_add_slice(rk,rk1);
+    bs_add_slice(rk,rk1);
 
 }
 

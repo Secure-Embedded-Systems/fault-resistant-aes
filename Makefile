@@ -4,13 +4,14 @@ obj = $(src:.c=.o)
 LDFLAGS = -Wl,--gc-sections
 CFLAGS = -O3 -fdata-sections -ffunction-sections -DUNROLL_TRANSPOSE -Wall
 
-#CC=sparc-elf-gcc
-CC=gcc
+CC=sparc-elf-gcc
+#CC=gcc
 
 name = bitslice
 
 $(name):  _testbench $(obj)
 	$(CC) $(LDFLAGS) -o $@ $(obj) $(LDFLAGS)
+	sparc-elf-objdump -D $@ > $@.lst
 
 
 test: _test $(obj)
@@ -32,7 +33,6 @@ _footprint: tests/tests.c
 
 _testbench: testbench/app.c
 	$(eval obj+=_testbench.o)
-	$(eval LDFLAGS+= -lcrypto)
 	$(CC) -c $(CFLAGS) -o $@.o $^
 
 
