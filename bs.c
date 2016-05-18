@@ -15,6 +15,7 @@
 #endif
 
 int ROUND = 0;
+volatile int _W = 0;
 
 void bs_addroundkey(word_t * B, word_t * rk)
 {
@@ -235,8 +236,12 @@ void bs_sbox(word_t U[8])
         L15,L16,L17,L18,L19,L20,
         L21,L22,L23,L24,L25,L26,
         L27,L28,L29;
+    if (ROUND == 10)
+    {
+        _W = 9;
+    }
 
-    T1 = U[7] ^ U[4];
+
     T2 = U[7] ^ U[2];
     T3 = U[7] ^ U[1];
     T4 = U[4] ^ U[2];
@@ -585,14 +590,9 @@ void bs_transpose_rev(word_t * blocks)
 #define R3_shift        (BLOCK_SIZE/4)*3
 #define B_MOD           (BLOCK_SIZE)
 
-volatile int W = 0;
 
 void bs_shiftrows(word_t * B)
 {
-    if (ROUND == 10)
-    {
-        W = 9;
-    }
     word_t Bp_space[BLOCK_SIZE];
     word_t * Bp = Bp_space;
     word_t * Br0 = B + 0;
@@ -1102,6 +1102,7 @@ void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
         bs_shiftmix(state);
         bs_addroundkey(state,rk[round]);
     }
+    ROUND = 10;
     bs_apply_sbox(state);
     bs_shiftrows(state);
     bs_addroundkey(state,rk[10]);
