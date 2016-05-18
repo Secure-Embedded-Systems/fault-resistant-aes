@@ -14,6 +14,7 @@
 #error "endianness not supported"
 #endif
 
+int ROUND = 0;
 
 void bs_addroundkey(word_t * B, word_t * rk)
 {
@@ -584,9 +585,14 @@ void bs_transpose_rev(word_t * blocks)
 #define R3_shift        (BLOCK_SIZE/4)*3
 #define B_MOD           (BLOCK_SIZE)
 
+volatile int W = 0;
 
 void bs_shiftrows(word_t * B)
 {
+    if (ROUND == 10)
+    {
+        W = 9;
+    }
     word_t Bp_space[BLOCK_SIZE];
     word_t * Bp = Bp_space;
     word_t * Br0 = B + 0;
@@ -1089,6 +1095,7 @@ void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
     bs_addroundkey(state,rk[0]);
     for (round = 1; round < 10; round++)
     {
+        /*round = ROUND;*/
         bs_apply_sbox(state);
         /*bs_shiftrows(state);*/
         /*bs_mixcolumns(state);*/

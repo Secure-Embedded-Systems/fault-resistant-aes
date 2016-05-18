@@ -10,42 +10,52 @@
 #include "app.h"
 #include "../bs.h"
 
+uint16_t feed_crc(uint16_t crc, uint8_t b)
+{
+    crc ^= b;
+    crc = crc & 1 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+    crc = crc & 1 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+    crc = crc & 1 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+    crc = crc & 1 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+    crc = crc & 1 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+    crc = crc & 1 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+    crc = crc & 1 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+    return crc & 1 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+}
+
+uint16_t do_crc(uint8_t * data, int len)
+{
+    int i;
+    uint16_t crc = 0;
+    for (i=0; i< len; i++)
+    {
+        crc = feed_crc(crc,data[i]);
+    }
+    return crc;
+}
 
 int cli_app(int argc, char * argv[])
 {
     uint8_t key[16] = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
     uint8_t iv[16]  = "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
-    uint8_t pt[16*10000];
-    uint8_t ct[16*10000];
-    uint8_t ct2[16*10000];
+    uint8_t pt[16*32];
+    uint8_t ct[16*32];
+    uint8_t ct2[16*32];
+
+    memset(pt,0xa5, sizeof(pt));
 
     int amt = sizeof(pt);
 
-    printf("%d bytes\n",amt);
-
     word_t rk[11][BLOCK_SIZE];
     bs_expand_key(rk, key);
-    leonbare_init_ticks();
 
-    uint32_t tstart,tend;
-    tstart = clock();
-    {
-        aes_ctr_encrypt(ct, pt, amt, key, iv, rk);
-    }
-    tend = clock();
+    aes_ctr_encrypt(ct, pt, amt, key, iv, rk);
 
-    double total = ((1.0e-6 * (double)tend) -
-                (1.0e-6 * (double)tstart));
-
-    printf("unprotected performance for %d word length\n", WORD_SIZE);
-    printf("-------------------------------\n");
-    printf("%.5f s\n", total);
-    printf("%.15f s/byte\n", total/amt);
-    printf("%.5f cycles/byte (for 50 MHz)\n", 50ull * (1ull<<20) * total/amt);
-
-    
-
+    printf("{");
+    printf("%hx",do_crc(ct,sizeof(ct)));
+    printf("}\n");
+    exit(0);
 
     return 0;
 }
