@@ -148,6 +148,7 @@ word_t CONTROL_SHIFT;
 
 void fault_handler()
 {
+    exit(1);
     DATA_ERRORS = 0;
 
     num_rbits += FR_INCREMENT;
@@ -169,7 +170,7 @@ void fault_handler()
 word_t fr_get_mask()
 {
     word_t mask = 0;
-    int i = MAX(num_rbits,15);
+    int i = MIN(num_rbits,15);
     int evenbits = (num_rbits + ((~num_rbits) & 1));
 
     rng_seed |= (~rng_seed) & 1;
@@ -264,7 +265,7 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
 
                 if (memcmp(ctr_p, mem, BLOCK_SIZE/8) != 0)
                 {
-                    printf("faulty slice %d!!\n", i);
+                    printf("{DATA%d}\n", i);
                     goto fault;
                 }
             }
@@ -275,7 +276,8 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
         if (memcmp(ctr_p + (BLOCK_SIZE/8) * (WORD_SIZE-3), ones_enc, 16) != 0)
         {
             // control fault
-            printf("control faulty slice %d!!\n", i);
+            /*printf("control faulty slice %d!!\n", i);*/
+            printf("{CONTROL30}\n");
             dump_hex(ctr_p + (BLOCK_SIZE/8) * (WORD_SIZE-3),16);
             goto fault;
         }
@@ -283,7 +285,8 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
         if (num_rbits > 2 && memcmp(ctr_p + (BLOCK_SIZE/8) * (WORD_SIZE-2), ones_enc2, 16) != 0)
         {
             // control fault
-            printf("control faulty slice %d!!\n", i+1);
+            /*rintf("control faulty slice %d!!\n", i+1);*/
+            printf("{CONTROL31}\n", i);
             dump_hex(ctr_p + (BLOCK_SIZE/8) * (WORD_SIZE-2),16);
             goto fault;
         }

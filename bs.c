@@ -213,6 +213,10 @@ void bs_sbox_rev(word_t U[8])
     memmove(U,W,sizeof(W));
 }
 
+int ROUND = 0;
+volatile int _W = 0;
+
+
 void bs_sbox(word_t U[8])
 {
     word_t S[8];
@@ -239,6 +243,10 @@ void bs_sbox(word_t U[8])
         L15,L16,L17,L18,L19,L20,
         L21,L22,L23,L24,L25,L26,
         L27,L28,L29;
+    if (ROUND == 10)
+    {
+        _W = 9;
+    }
 
     T1 = U[7] ^ U[4];
     T2 = U[7] ^ U[2];
@@ -1146,6 +1154,7 @@ void bs_cipher_faulty(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_
         bs_addroundkey_fr(state,rk[round], mask, cmask);
     }
 #endif
+    ROUND = 10;
 
     bs_apply_sbox(state);
     bs_shiftrows(state);

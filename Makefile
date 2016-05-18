@@ -6,8 +6,8 @@ LDFLAGS = -Wl,--gc-sections
 CFLAGS = -O2 -fdata-sections -ffunction-sections  #-DUNROLL_TRANSPOSE
 
 
-CC=gcc
-#CC=sparc-elf-gcc
+#CC=gcc
+CC=sparc-elf-gcc
 
 name = bitslice
 
@@ -21,6 +21,12 @@ test: _test $(obj)
 
 footprint: _footprint $(obj)
 	$(CC) $(LDFLAGS) -o $(name) $(obj) $(LDFLAGS)
+
+
+fault: _fault $(obj)
+	$(CC) $(LDFLAGS) -o $(name) $(obj) $(LDFLAGS)
+	sparc-elf-objdump -D $(name) > $(name).lst
+
 
 
 _test: tests/tests.c
@@ -37,6 +43,11 @@ _testbench: testbench/app.c
 	$(eval obj+=_testbench.o)
 	$(CC) -c $(CFLAGS) -o $@.o $^
 
+_fault: testbench/leon-app.c
+	$(eval obj+=_fault.o)
+	$(CC) -c $(CFLAGS) -o $@.o $^
+
+
 
 clean:
-	rm -f $(obj) _test.o _footprint.o _testbench.o $(name)
+	rm -f $(obj) _test.o _footprint.o _testbench.o _fault.o $(name)
