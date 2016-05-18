@@ -2,7 +2,7 @@
 #define _FR_DEFS_
 
 
-#define FR_STARTING_R_BITS  16
+#define FR_STARTING_R_BITS  2
 #define FR_STARTING_ROUNDS  1
 #define FR_INCREMENT        1
 

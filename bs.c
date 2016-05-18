@@ -1121,7 +1121,7 @@ void bs_cipher_faulty(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE], word_
     /*state[4] ^=  (1 << (rng & BS_2_MASK));*/
 
     // control fault
-    /*state[4] ^= state[5];*/
+    /*state[4] ^= (1<<30);*/
 
     word_t cmask = (ONE << CONTROL_SHIFT);
     mask &= ~cmask;

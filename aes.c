@@ -134,6 +134,7 @@ static int num_rbits = (FR_STARTING_R_BITS+1);
 static uint8_t rng_seed = 0x55;
 static uint8_t ones_block[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
 static uint8_t ones_enc[] = "\x8a\xf2\x86\x01\x42\xf7\x86\xf4\x09\x30\x7c\x1a\x3f\x7e\xaa\xac";
+static uint8_t ones_enc2[] = "\x7d\xf7\x6b\x0c\x1a\xb8\x99\xb3\x3e\x42\xf0\x47\xb9\x1b\x54\x6f";
 static int iterations_encrypted = 0;
 
 //                          1,    2,    3,    4,    5,     6,     7,     8,     9,     10
@@ -168,7 +169,7 @@ void fault_handler()
 word_t fr_get_mask()
 {
     word_t mask = 0;
-    int i = num_rbits;
+    int i = MAX(num_rbits,15);
     int evenbits = (num_rbits + ((~num_rbits) & 1));
 
     rng_seed |= (~rng_seed) & 1;
@@ -216,23 +217,23 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
 
         int i,j=1;
         memset(ctr, 0xff, BS_BLOCK_SIZE);
+        memset((ctr)+((WORDS_PER_BLOCK)*(WORD_SIZE-1)), 0x00, 16);
         if (iterations_encrypted)
         {
             INC_CTR(iv_copy,1);
         }
         memmove(ctr, iv_copy, BLOCK_SIZE/8);
         size -= BLOCK_SIZE/8;
-        for (i = 1; i < WORD_SIZE; i++)
+        for (i = 1; i < WORD_SIZE-2; i++)
         {
+            /*if (i == WORD_SIZE-1 || (num_rbits > 2 && i == WORD_SIZE - 2))*/
+            /*{*/
+                /*continue;*/
+            /*}*/
+
             // protected stream
             if ((frmask & (ONE<<i)))
             {
-                if(!moved_const)
-                {
-                    moved_const = 1;
-                    CONTROL_SHIFT = i;
-                    continue;
-                }
             }
             else
             if (j < blocks)
@@ -255,16 +256,12 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
         uint8_t * ctr_p = (uint8_t *) ctr + (BLOCK_SIZE / 8);
 
 #ifdef FR_USE_ALG_CHECKING
-        for (i = 1; i < WORD_SIZE; i+=2)
+        for (i = 1; i < WORD_SIZE-2; i+=2)
         {
-            if (frmask & (ONE<<i))
-            {
                 uint8_t * mem = ctr_p - BLOCK_SIZE/8;
-                if (moved_const)
-                {
-                    moved_const = 0;
-                    mem = ones_enc;
-                }
+            if ((frmask & (ONE<<i)) || moved_const)
+            {
+
                 if (memcmp(ctr_p, mem, BLOCK_SIZE/8) != 0)
                 {
                     printf("faulty slice %d!!\n", i);
@@ -273,6 +270,24 @@ void aes_ctr_encrypt_fr(uint8_t * outputb, uint8_t * inputb, int size, uint8_t *
             }
             ctr_p += BLOCK_SIZE/4;
         }
+
+        ctr_p = (uint8_t *) ctr + (BLOCK_SIZE / 8);
+        if (memcmp(ctr_p + (BLOCK_SIZE/8) * (WORD_SIZE-3), ones_enc, 16) != 0)
+        {
+            // control fault
+            printf("control faulty slice %d!!\n", i);
+            dump_hex(ctr_p + (BLOCK_SIZE/8) * (WORD_SIZE-3),16);
+            goto fault;
+        }
+
+        if (num_rbits > 2 && memcmp(ctr_p + (BLOCK_SIZE/8) * (WORD_SIZE-2), ones_enc2, 16) != 0)
+        {
+            // control fault
+            printf("control faulty slice %d!!\n", i+1);
+            dump_hex(ctr_p + (BLOCK_SIZE/8) * (WORD_SIZE-2),16);
+            goto fault;
+        }
+
 #endif
 
 #ifdef FR_USE_INSTR_CHECKING

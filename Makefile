@@ -6,7 +6,8 @@ LDFLAGS = -Wl,--gc-sections
 CFLAGS = -O2 -fdata-sections -ffunction-sections  #-DUNROLL_TRANSPOSE
 
 
-CC=sparc-elf-gcc
+CC=gcc
+#CC=sparc-elf-gcc
 
 name = bitslice
 
