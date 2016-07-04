@@ -8,7 +8,18 @@ in parallel (depending on the word length).  E.g. a 32 bit word length can compu
 Because every stream is transposed, it becomes easy to enumerate them and decide which ones can act as redundant or
 constant slices for detection of fault injections. 
 
+You can see different implementations of the fault resistance added to the bitsliced implementation by looking at
+the different branches:
 
+* [unprotected](https://github.com/Secure-Embedded-Systems/fault-resistant-aes/tree/aes-unprotected)
+* [redundant slices](https://github.com/Secure-Embedded-Systems/fault-resistant-aes/tree/master)
+* [pipelined](https://github.com/Secure-Embedded-Systems/fault-resistant-aes/tree/pipelined)
+* [shuffled pipelined](https://github.com/Secure-Embedded-Systems/fault-resistant-aes/tree/pipelined-shuffled)
+
+See our paper:
+
+	C. Patrick, B. Yuce, N. Farhady Ghalaty, P. Schaumont, "Lightweight Fault Attack Resistance in Software Using Intra-Instruction Redundancy," Selected Areas in Cryptography (SAC 2016), St. John's, Canada, August 2016. 
+	
 
 Current results
 -----------------
