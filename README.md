@@ -18,7 +18,7 @@ the different branches:
 
 See our paper:
 
-	C. Patrick, B. Yuce, N. Farhady Ghalaty, P. Schaumont, "Lightweight Fault Attack Resistance in Software Using Intra-Instruction Redundancy," Selected Areas in Cryptography (SAC 2016), St. John's, Canada, August 2016. 
+C. Patrick, B. Yuce, N. Farhady Ghalaty, P. Schaumont, "Lightweight Fault Attack Resistance in Software Using Intra-Instruction Redundancy," Selected Areas in Cryptography (SAC 2016), St. John's, Canada, August 2016. 
 	
 
 Current results
