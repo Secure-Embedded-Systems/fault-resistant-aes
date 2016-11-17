@@ -22,7 +22,6 @@ void aes_ecb_test()
 
     aes_ecb_encrypt(output, pt_vector,16,key_vector);
 
-
     printf("cipher text: \n");
     dump_hex(output, 16);
 

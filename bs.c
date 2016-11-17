@@ -1,5 +1,6 @@
 
 #include <string.h>
+#include <stdio.h>
 #include "bs.h"
 
 #if (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) ||\
@@ -1080,25 +1081,82 @@ void bs_expand_key(word_t (* rk)[BLOCK_SIZE], uint8_t * _key)
 
 }
 
+//
+#include <asm-leon/timer.h>
+//
+
 void bs_cipher(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
 {
+    static int c = 0;
+    printf("called %d\n",++c);
+
+
     int round;
+    uint32_t tstart,tend;
+    uint32_t total = 0;
+
+    tstart = clock();
     bs_transpose(state);
+    tend = clock();
+    printf("bs_transpose: %d us\n",tend-tstart);
+    total += tend-tstart;
 
 
+    tstart = clock();
     bs_addroundkey(state,rk[0]);
+    tend = clock();
+    printf("bs_addroundkey: %d us\n",tend-tstart);
+    total += tend-tstart;
+
     for (round = 1; round < 10; round++)
     {
+        tstart = clock();
         bs_apply_sbox(state);
+        tend = clock();
+        printf("bs_apply_sbox: %d us\n",tend-tstart);
+        total += tend-tstart;
+
         /*bs_shiftrows(state);*/
         /*bs_mixcolumns(state);*/
+
+        tstart = clock();
         bs_shiftmix(state);
+        tend = clock();
+        printf("bs_shiftmix: %d us\n",tend-tstart);
+        total += tend-tstart;
+
+        tstart = clock();
         bs_addroundkey(state,rk[round]);
+        tend = clock();
+        printf("bs_addroundkey: %d us\n",tend-tstart);
+        total += tend-tstart;
     }
+    tstart = clock();
     bs_apply_sbox(state);
+    tend = clock();
+    printf("bs_apply_sbox: %d us\n",tend-tstart);
+    total += tend-tstart;
+
+    tstart = clock();
     bs_shiftrows(state);
+    tend = clock();
+    printf("bs_shiftrows: %d us\n",tend-tstart);
+    total += tend-tstart;
+
+
+    tstart = clock();
     bs_addroundkey(state,rk[10]);
+    tend = clock();
+    printf("bs_addroundkey: %d us\n",tend-tstart);
+    total += tend-tstart;
+
+    tstart = clock();
     bs_transpose_rev(state);
+    tend = clock();
+    printf("bs_transpose_rev: %d us\n",tend-tstart);
+    total += tend-tstart;
+
+    printf("TOTAL: %d\n",total);
 }
 
 void bs_cipher_rev(word_t state[BLOCK_SIZE], word_t (* rk)[BLOCK_SIZE])
